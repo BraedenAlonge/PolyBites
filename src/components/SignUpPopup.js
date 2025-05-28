@@ -1,6 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
+  const popupRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (popupRef.current && !popupRef.current.contains(event.target)) {
+        onClose();
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
   const [formData, setFormData] = useState({
     fullName: '',
     emailOrPhone: '',
@@ -25,7 +43,7 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative">
+      <div ref={popupRef} className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative">
         {/* Close button */}
         <button
           onClick={onClose}

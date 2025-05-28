@@ -1,5 +1,7 @@
 import React, { useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Restaurant from "./components/Restaurant";
+import RestaurantDetails from "./components/RestaurantDetails";
 import SignInPopup from "./components/SignInPopup";
 import SignUpPopup from "./components/SignUpPopup";
 import "./styles/App.css"
@@ -15,33 +17,96 @@ const dummyRestaurants = [
     name: "Brunch",
     image: brunchImage,
     rating: 4.5,
-    reviews: [
-      { id: 1, text: "Amazing food and great service!" },
-      { id: 2, text: "Loved the spicy noodles." },
-      { id: 3, text: "The ambiance was lovely." },
-    ],
+    menuItems: [
+      {
+        id: 1,
+        name: "Avocado Toast",
+        price: 12.99,
+        image: brunchImage,
+        description: "Fresh avocado on sourdough toast with poached eggs and microgreens",
+        details: ["Vegetarian", "Locally sourced bread", "Free-range eggs"],
+        reviews: [
+          { rating: 5, author: "Emma S.", text: "Best avocado toast in town!" },
+          { rating: 4, author: "Mike R.", text: "Fresh and delicious" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Eggs Benedict",
+        price: 14.99,
+        image: brunchImage,
+        description: "Classic eggs benedict with hollandaise sauce and Canadian bacon",
+        details: ["House-made hollandaise", "Free-range eggs", "Served with potatoes"],
+        reviews: [
+          { rating: 5, author: "Sarah L.", text: "Perfect hollandaise!" },
+          { rating: 4, author: "John D.", text: "A brunch classic done right" }
+        ]
+      }
+    ]
   },
   {
     id: 2,
     name: "Hearth",
     image: hearthImage,
     rating: 4.2,
-    reviews: [
-      { id: 1, text: "Juiciest burger I've ever had!" },
-      { id: 2, text: "Fries were crispy and delicious." },
-      { id: 3, text: "Good selection of beers." },
-    ],
+    menuItems: [
+      {
+        id: 1,
+        name: "Classic Burger",
+        price: 15.99,
+        image: hearthImage,
+        description: "Hand-formed patty with lettuce, tomato, onion, and special sauce",
+        details: ["1/3 lb Angus beef", "House-made sauce", "Brioche bun"],
+        reviews: [
+          { rating: 5, author: "Tom H.", text: "Juiciest burger ever!" },
+          { rating: 4, author: "Lisa M.", text: "Great classic burger" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Truffle Fries",
+        price: 8.99,
+        image: hearthImage,
+        description: "Hand-cut fries tossed with truffle oil and parmesan",
+        details: ["House-cut potatoes", "Italian truffle oil", "Aged parmesan"],
+        reviews: [
+          { rating: 5, author: "Alex K.", text: "Addictively good!" },
+          { rating: 5, author: "Maria C.", text: "Perfect amount of truffle" }
+        ]
+      }
+    ]
   },
   {
     id: 4,
     name: "Noodles",
     image: noodlesImage,
     rating: 4.3,
-    reviews: [
-      { id: 1, text: "Authentic noodle dishes." },
-      { id: 2, text: "So many options to choose from!" },
-      { id: 3, text: "The broth was rich and flavorful." },
-    ],
+    menuItems: [
+      {
+        id: 1,
+        name: "Ramen",
+        price: 13.99,
+        image: noodlesImage,
+        description: "Traditional ramen with rich pork broth and fresh noodles",
+        details: ["24-hour broth", "House-made noodles", "Chashu pork"],
+        reviews: [
+          { rating: 5, author: "David L.", text: "Authentic taste!" },
+          { rating: 4, author: "Jenny W.", text: "Amazing broth" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Pad Thai",
+        price: 12.99,
+        image: noodlesImage,
+        description: "Classic pad thai with rice noodles, tofu, and peanuts",
+        details: ["Rice noodles", "House-made sauce", "Fresh bean sprouts"],
+        reviews: [
+          { rating: 5, author: "Kate P.", text: "Perfect balance of flavors" },
+          { rating: 4, author: "Ryan M.", text: "Great portion size" }
+        ]
+      }
+    ]
   },
   {
     id: 3,
@@ -58,11 +123,32 @@ const dummyRestaurants = [
     name: "Balance",
     image: balanceImage,
     rating: 4.7,
-    reviews: [
-      { id: 1, text: "Fresh and healthy options." },
-      { id: 2, text: "Loved the smoothie!" },
-      { id: 3, text: "Guilt-free deliciousness." },
-    ],
+    menuItems: [
+      {
+        id: 1,
+        name: "Quinoa Bowl",
+        price: 13.99,
+        image: balanceImage,
+        description: "Fresh quinoa bowl with roasted vegetables and tahini dressing",
+        details: ["Vegan", "Gluten-free", "High protein"],
+        reviews: [
+          { rating: 5, author: "Rachel G.", text: "So fresh and filling!" },
+          { rating: 4, author: "Chris P.", text: "Great healthy option" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Green Smoothie",
+        price: 7.99,
+        image: balanceImage,
+        description: "Nutrient-packed smoothie with spinach, banana, and almond milk",
+        details: ["Dairy-free", "No added sugar", "Vitamin rich"],
+        reviews: [
+          { rating: 5, author: "Sam T.", text: "Perfect post-workout drink" },
+          { rating: 4, author: "Linda K.", text: "Tastes great and healthy" }
+        ]
+      }
+    ]
   },
   {
     id: 6,
@@ -99,25 +185,68 @@ const dummyRestaurants = [
     name: "Grand Avenue Deli",
     image: deliImage,
     rating: 4.1,
-    reviews: [
-      { id: 1, text: "Classic diner food done right." },
-      { id: 2, text: "Great milkshakes!" },
-    ],
+    menuItems: [
+      {
+        id: 1,
+        name: "Classic Reuben",
+        price: 12.99,
+        image: deliImage,
+        description: "Traditional Reuben with corned beef, sauerkraut, and Russian dressing",
+        details: ["House-made corned beef", "Fresh rye bread", "Swiss cheese"],
+        reviews: [
+          { rating: 5, author: "Mark L.", text: "Best Reuben in town!" },
+          { rating: 4, author: "Amy S.", text: "Great sandwich" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Matzo Ball Soup",
+        price: 6.99,
+        image: deliImage,
+        description: "Classic matzo ball soup with tender chicken and vegetables",
+        details: ["Family recipe", "Made fresh daily", "Comfort food"],
+        reviews: [
+          { rating: 5, author: "David M.", text: "Just like grandma's" },
+          { rating: 4, author: "Sarah B.", text: "Perfect for cold days" }
+        ]
+      }
+    ]
   },
   {
     id: 10,
     name: "Jamba Juice",
     image: jambaImage,
     rating: 4.1,
-    reviews: [
-      { id: 1, text: "Classic diner food done right." },
-      { id: 2, text: "Great milkshakes!" },
-    ],
+    menuItems: [
+      {
+        id: 1,
+        name: "Mango-a-go-go",
+        price: 6.99,
+        image: jambaImage,
+        description: "Refreshing mango smoothie with passion fruit and orange sherbet",
+        details: ["Real fruit", "No artificial flavors", "Vitamin C boost"],
+        reviews: [
+          { rating: 5, author: "Julie R.", text: "So refreshing!" },
+          { rating: 4, author: "Mike T.", text: "Perfect summer drink" }
+        ]
+      },
+      {
+        id: 2,
+        name: "Protein Berry Workout",
+        price: 7.99,
+        image: jambaImage,
+        description: "Protein-packed smoothie with strawberries and whey protein",
+        details: ["20g protein", "All natural", "Post-workout favorite"],
+        reviews: [
+          { rating: 5, author: "Tim F.", text: "Great after the gym" },
+          { rating: 4, author: "Laura H.", text: "Filling and nutritious" }
+        ]
+      }
+    ]
   },
 ];
 
-export default function App() {
-  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+function Layout({ children }) {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
 
@@ -157,53 +286,38 @@ export default function App() {
         onSwitchToSignIn={handleSwitchToSignIn}
       />
 
-      <main className="container mx-auto px-4 pt-6">
-        {!selectedRestaurant ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ paddingBottom: '1rem' }}>
-           {dummyRestaurants.map((restaurant) => (
-              <Restaurant
-                key={restaurant.id}
-                data={restaurant}
-                onClick={() => setSelectedRestaurant(restaurant)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div>
-            <button
-              className="mb-6 px-6 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors flex items-center gap-2"
-              onClick={() => setSelectedRestaurant(null)}
-            >
-              <span>←</span> Back to list
-            </button>
-            <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-              <img
-                src={selectedRestaurant.image}
-                alt={selectedRestaurant.name}
-                className="w-full h-72 object-cover"
-              />
-              <div className="p-6">
-                <h2 className="text-3xl font-semibold text-gray-800 mb-2">
-                  {selectedRestaurant.name}
-                </h2>
-                <p className="text-green-600 font-medium text-lg mb-4">
-                  Rating: {selectedRestaurant.rating} ⭐
-                </p>
-                <div className="bg-green-50 rounded-lg p-4">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-3">Reviews</h3>
-                  <ul className="space-y-3">
-                    {selectedRestaurant.reviews.map((review) => (
-                      <li key={review.id} className="bg-white p-3 rounded-lg shadow-sm">
-                        {review.text}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
+      {children}
     </div>
+  );
+}
+
+function HomePage() {
+  return (
+    <main className="container mx-auto px-4 pt-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ paddingBottom: '1rem' }}>
+        {dummyRestaurants.map((restaurant) => (
+          <Restaurant
+            key={restaurant.id}
+            data={restaurant}
+          />
+        ))}
+      </div>
+    </main>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route 
+            path="/restaurant/:id" 
+            element={<RestaurantDetails restaurants={dummyRestaurants} />} 
+          />
+        </Routes>
+      </Layout>
+    </BrowserRouter>
   );
 }

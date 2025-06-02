@@ -1,0 +1,12 @@
+1. In polybites-backend, create a .env file. Add the following line with no extra characters or spaces:
+DATABASE_URL=postgres://postgres.[TRANSAC-POOLER]:[PASSWORD]@aws-0-us-east-2.pooler.supabase.com:6543/postgres
+
+Your URL may be different. Copy the specific transaction pooler [TRANSAC-POOLER] connection part in the link under:
+Connect -> Transaction Pooler
+To get the PASSWORD:
+Project Settings -> Configuration -> Database -> Database Password -> Reset database password
+Copy and paste the password into the URL
+
+IMPORTANT: Make sure that you add a .gitignore file and paste the following inside:
+.env
+

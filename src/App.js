@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Restaurant from "./components/Restaurant";
 import RestaurantDetails from "./components/RestaurantDetails";
@@ -11,6 +11,7 @@ import noodlesImage from "./assets/images/Noodles.avif";
 import balanceImage from "./assets/images/Balance.jpg";
 import deliImage from "./assets/images/Deli.jpg";
 import jambaImage from "./assets/images/Jamba.jpg";
+
 const dummyRestaurants = [
   {
     id: 1,
@@ -77,7 +78,7 @@ const dummyRestaurants = [
     ]
   },
   {
-    id: 4,
+    id: 3,
     name: "Noodles",
     image: noodlesImage,
     rating: 4.3,
@@ -109,17 +110,7 @@ const dummyRestaurants = [
     ]
   },
   {
-    id: 3,
-    name: "Streats",
-    image: "https://source.unsplash.com/400x300/?streetfood",
-    rating: 4.0,
-    reviews: [
-      { id: 1, text: "Quick and tasty bites!" },
-      { id: 2, text: "Great for a casual meal." },
-    ],
-  },
-  {
-    id: 5,
+    id: 4,
     name: "Balance",
     image: balanceImage,
     rating: 4.7,
@@ -151,37 +142,7 @@ const dummyRestaurants = [
     ]
   },
   {
-    id: 6,
-    name: "Mingle",
-    image: "https://source.unsplash.com/400x300/?cafe",
-    rating: 3.9,
-    reviews: [
-      { id: 1, text: "Cozy atmosphere." },
-      { id: 2, text: "Good coffee and pastries." },
-    ],
-  },
-  {
-    id: 7,
-    name: "Nosh",
-    image: "https://source.unsplash.com/400x300/?diner",
-    rating: 4.1,
-    reviews: [
-      { id: 1, text: "Classic diner food done right." },
-      { id: 2, text: "Great milkshakes!" },
-    ],
-  },
-  {
-    id: 8,
-    name: "Vista Grande Express",
-    image: "https://source.unsplash.com/400x300/?diner",
-    rating: 4.1,
-    reviews: [
-      { id: 1, text: "Classic diner food done right." },
-      { id: 2, text: "Great milkshakes!" },
-    ],
-  },
-  {
-    id: 9,
+    id: 5,
     name: "Grand Avenue Deli",
     image: deliImage,
     rating: 4.1,
@@ -213,7 +174,7 @@ const dummyRestaurants = [
     ]
   },
   {
-    id: 10,
+    id: 6,
     name: "Jamba Juice",
     image: jambaImage,
     rating: 4.1,
@@ -243,6 +204,46 @@ const dummyRestaurants = [
         ]
       }
     ]
+  },
+  {
+    id: 7,
+    name: "Streats",
+    image: "https://source.unsplash.com/400x300/?streetfood",
+    rating: 4.0,
+    reviews: [
+      { id: 1, text: "Quick and tasty bites!" },
+      { id: 2, text: "Great for a casual meal." },
+    ],
+  },
+  {
+    id: 8,
+    name: "Mingle",
+    image: "https://source.unsplash.com/400x300/?cafe",
+    rating: 3.9,
+    reviews: [
+      { id: 1, text: "Cozy atmosphere." },
+      { id: 2, text: "Good coffee and pastries." },
+    ],
+  },
+  {
+    id: 9,
+    name: "Nosh",
+    image: "https://source.unsplash.com/400x300/?diner",
+    rating: 4.1,
+    reviews: [
+      { id: 1, text: "Classic diner food done right." },
+      { id: 2, text: "Great milkshakes!" },
+    ],
+  },
+  {
+    id: 10,
+    name: "Vista Grande Express",
+    image: "https://source.unsplash.com/400x300/?diner",
+    rating: 4.1,
+    reviews: [
+      { id: 1, text: "Classic diner food done right." },
+      { id: 2, text: "Great milkshakes!" },
+    ],
   },
 ];
 
@@ -307,6 +308,23 @@ function HomePage() {
 }
 
 export default function App() {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/restaurant-reviews');
+        const data = await response.json();
+        setUsers(data);
+        console.log('Restaurants:', data);
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
   return (
     <BrowserRouter>
       <Layout>

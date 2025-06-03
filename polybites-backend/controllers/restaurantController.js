@@ -1,13 +1,11 @@
-const db = require('../models/db');
+import db from '../models/db.js';
 
-const getRestaurants = async (req, res) => {
+export const getRestaurants = async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM restaurants');
     res.json(rows);
   } catch (err) {
     console.error('Database Query Error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
-}
+  }
 };
-
-module.exports = { getRestaurants };

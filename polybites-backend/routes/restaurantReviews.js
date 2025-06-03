@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { getRestaurantReviews } from '../controllers/restaurantReviewController.js';
+
 const router = express.Router();
-const { getRestaurantReviews } = require('../controllers/restaurantReviewController');
 
 router.get('/', getRestaurantReviews);
 
-module.exports = router; 
+export default router;

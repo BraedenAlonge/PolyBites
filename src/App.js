@@ -292,47 +292,62 @@ function Layout({ children }) {
   );
 }
 
-function HomePage() {
+function HomePage({ restaurants, loading, error }) {
   return (
     <main className="container mx-auto px-4 pt-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ paddingBottom: '1rem' }}>
-        {dummyRestaurants.map((restaurant) => (
-          <Restaurant
-            key={restaurant.id}
-            data={restaurant}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="text-center">Loading restaurants...</div>
+      ) : error ? (
+        <div className="text-center text-red-600">Error: {error}</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ paddingBottom: '1rem' }}>
+          {restaurants.map((restaurant) => (
+            <Restaurant
+              key={restaurant.id}
+              data={restaurant}
+            />
+          ))}
+        </div>
+      )}
     </main>
   );
 }
 
 export default function App() {
-  const [users, setUsers] = useState([]);
+  const [restaurants, setRestaurants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchRestaurants = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/restaurant-reviews');
+        const response = await fetch('http://localhost:5000/api/restaurants');
+        if (!response.ok) {
+          throw new Error('Failed to fetch restaurants');
+        }
         const data = await response.json();
-        setUsers(data);
-        console.log('Restaurants:', data);
-      } catch (error) {
-        console.error('Error fetching restaurants:', error);
+        setRestaurants(data);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
       }
     };
 
-    fetchUsers();
+    fetchRestaurants();
   }, []);
 
   return (
     <BrowserRouter>
       <Layout>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route 
+            path="/" 
+            element={<HomePage restaurants={restaurants} loading={loading} error={error} />} 
+          />
           <Route 
             path="/restaurant/:id" 
-            element={<RestaurantDetails restaurants={dummyRestaurants} />} 
+            element={<RestaurantDetails restaurants={restaurants} />} 
           />
         </Routes>
       </Layout>

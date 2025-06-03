@@ -8,7 +8,11 @@ export default function RestaurantDetails({ restaurants }) {
   const [selectedFood, setSelectedFood] = useState(null);
   const pageRef = useRef(null);
   
-  const restaurant = restaurants.find(r => r.id === parseInt(id));
+  console.log('Restaurants in RestaurantDetails:', restaurants);
+  console.log('Looking for restaurant with id:', id);
+  
+  const restaurant = restaurants?.find(r => r.id === parseInt(id));
+  console.log('Found restaurant:', restaurant);
 
   useEffect(() => {
     function handleClickOutside(event) {

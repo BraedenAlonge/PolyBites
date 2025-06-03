@@ -1,13 +1,17 @@
-const express = require('express');
-const cors = require('cors');
-const app = express();
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
 
-const restaurantRoutes = require('./routes/restaurants');
-const userRoutes = require('./routes/users');
-const foodRoutes = require('./routes/foods');
-const foodReviewRoutes = require('./routes/foodReviews');
-const restaurantReviewRoutes = require('./routes/restaurantReviews');
+import testRouter from './routes/test.js';
+import restaurantRoutes from './routes/restaurants.js';
+import userRoutes from './routes/users.js';
+import foodRoutes from './routes/foods.js';
+import foodReviewRoutes from './routes/foodReviews.js';
+import restaurantReviewRoutes from './routes/restaurantReviews.js';
+
+dotenv.config(); // ✅ correct way to load .env in ESM
+
+const app = express(); // <-- ONLY HERE do we declare 'app'
 
 app.use(cors());
 app.use(express.json());
@@ -18,6 +22,7 @@ app.get('/', (req, res) => {
 });
 
 // API Routes
+app.use('/test', testRouter);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/foods', foodRoutes);

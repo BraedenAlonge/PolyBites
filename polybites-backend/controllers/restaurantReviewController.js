@@ -1,6 +1,6 @@
-const db = require('../models/db');
+import db from '../models/db.js';
 
-const getRestaurantReviews = async (req, res) => {
+export const getRestaurantReviews = async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM restaurant_reviews');
     res.json(rows);
@@ -9,5 +9,3 @@ const getRestaurantReviews = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-module.exports = { getRestaurantReviews }; 

@@ -10,7 +10,21 @@ export const getFoodReviews = async (req, res) => {
   }
 };
 
-const createFoodReview = async (req, res) => {
+export const getFoodReviewById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await db.query('SELECT * FROM food_reviews WHERE id = $1', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Food review not found' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const createFoodReview = async (req, res) => {
   const { user_id, food_id, rating, text } = req.body;
 
   try {
@@ -23,6 +37,4 @@ const createFoodReview = async (req, res) => {
     console.error('Database Query Error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
-};
-
-module.exports = { getFoodReviews, createFoodReview }; 
+}; 

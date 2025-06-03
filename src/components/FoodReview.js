@@ -1,7 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
+import ReviewForm from './ReviewForm';
 
 export default function FoodReview({ isOpen, onClose, foodItem }) {
+  const [isWritingReview, setIsWritingReview] = useState(false);
+
   if (!isOpen || !foodItem) return null;
+
+  const handleSubmitReview = async (reviewData) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/food-reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reviewData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit review');
+      }
+
+      // Close the review form and refresh the page to show the new review
+      setIsWritingReview(false);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Failed to submit review. Please try again.');
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -20,42 +46,60 @@ export default function FoodReview({ isOpen, onClose, foodItem }) {
           </button>
         </div>
         
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-6 overflow-y-auto">
           <div className="flex justify-between items-start mb-4">
             <div>
               <h3 className="text-2xl font-semibold text-gray-800">{foodItem.name}</h3>
               <p className="text-green-600 text-lg font-medium">${foodItem.price}</p>
             </div>
+            {!isWritingReview && (
+              <button
+                onClick={() => setIsWritingReview(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Write a Review
+              </button>
+            )}
           </div>
 
-          <p className="text-gray-600 mb-4">{foodItem.description}</p>
+          {isWritingReview ? (
+            <ReviewForm
+              foodItem={foodItem}
+              onSubmit={handleSubmitReview}
+              onCancel={() => setIsWritingReview(false)}
+            />
+          ) : (
+            <>
+              <p className="text-gray-600 mb-4">{foodItem.description}</p>
 
-          {foodItem.details && (
-            <div className="mb-6">
-              <h4 className="text-lg font-medium text-gray-800 mb-2">Details</h4>
-              <ul className="list-disc list-inside text-gray-600">
-                {foodItem.details.map((detail, index) => (
-                  <li key={index}>{detail}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+              {foodItem.details && (
+                <div className="mb-6">
+                  <h4 className="text-lg font-medium text-gray-800 mb-2">Details</h4>
+                  <ul className="list-disc list-inside text-gray-600">
+                    {foodItem.details.map((detail, index) => (
+                      <li key={index}>{detail}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-          {foodItem.reviews && (
-            <div>
-              <h4 className="text-lg font-medium text-gray-800 mb-2">Reviews</h4>
-              <div className="space-y-3">
-                {foodItem.reviews.map((review, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-800">{review.author}</span>
-                      <span className="text-green-600">{'⭐'.repeat(review.rating)}</span>
-                    </div>
-                    <p className="text-gray-600">{review.text}</p>
+              {foodItem.reviews && (
+                <div>
+                  <h4 className="text-lg font-medium text-gray-800 mb-2">Reviews</h4>
+                  <div className="space-y-3">
+                    {foodItem.reviews.map((review, index) => (
+                      <div key={index} className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-medium text-gray-800">{review.author}</span>
+                          <span className="text-green-600">{'⭐'.repeat(review.rating)}</span>
+                        </div>
+                        <p className="text-gray-600">{review.text}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

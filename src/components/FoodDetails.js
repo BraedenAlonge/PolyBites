@@ -1,8 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReviewForm from './ReviewForm';
 
-export default function FoodReview({ isOpen, onClose, foodItem }) {
+export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [isWritingReview, setIsWritingReview] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!foodItem?.id) return;
+      
+      try {
+        const response = await fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch reviews');
+        }
+        const data = await response.json();
+        setReviews(data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching reviews:', err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchReviews();
+    }
+  }, [isOpen, foodItem?.id]);
 
   if (!isOpen || !foodItem) return null;
 
@@ -20,9 +47,14 @@ export default function FoodReview({ isOpen, onClose, foodItem }) {
         throw new Error('Failed to submit review');
       }
 
-      // Close the review form and refresh the page to show the new review
+      // Fetch updated reviews instead of reloading
+      const updatedResponse = await fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
+      if (updatedResponse.ok) {
+        const updatedReviews = await updatedResponse.json();
+        setReviews(updatedReviews);
+      }
+
       setIsWritingReview(false);
-      window.location.reload();
     } catch (error) {
       console.error('Error submitting review:', error);
       alert('Failed to submit review. Please try again.');
@@ -34,7 +66,7 @@ export default function FoodReview({ isOpen, onClose, foodItem }) {
       <div className="food-review-popup bg-white rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
         <div className="relative">
           <img
-            src={foodItem.image}
+            src={foodItem.image_url || 'https://via.placeholder.com/600x400?text=No+Image'}
             alt={foodItem.name}
             className="w-full h-48 md:h-64 object-cover"
           />
@@ -72,33 +104,28 @@ export default function FoodReview({ isOpen, onClose, foodItem }) {
             <>
               <p className="text-gray-600 mb-4">{foodItem.description}</p>
 
-              {foodItem.details && (
-                <div className="mb-6">
-                  <h4 className="text-lg font-medium text-gray-800 mb-2">Details</h4>
-                  <ul className="list-disc list-inside text-gray-600">
-                    {foodItem.details.map((detail, index) => (
-                      <li key={index}>{detail}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {foodItem.reviews && (
-                <div>
-                  <h4 className="text-lg font-medium text-gray-800 mb-2">Reviews</h4>
+              <div className="mt-6">
+                <h4 className="text-lg font-medium text-gray-800 mb-2">Reviews</h4>
+                {loading ? (
+                  <div className="text-center py-4">Loading reviews...</div>
+                ) : error ? (
+                  <div className="text-center text-red-600 py-4">Error loading reviews: {error}</div>
+                ) : reviews.length > 0 ? (
                   <div className="space-y-3">
-                    {foodItem.reviews.map((review, index) => (
-                      <div key={index} className="bg-gray-50 rounded-lg p-4">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-800">{review.author}</span>
+                          <span className="font-medium text-gray-800">User #{review.user_id}</span>
                           <span className="text-green-600">{'⭐'.repeat(review.rating)}</span>
                         </div>
                         <p className="text-gray-600">{review.text}</p>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No reviews yet. Be the first to review!</p>
+                )}
+              </div>
             </>
           )}
         </div>

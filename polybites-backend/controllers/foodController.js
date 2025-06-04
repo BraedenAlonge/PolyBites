@@ -2,7 +2,7 @@ import db from '../models/db.js';
 
 export const getFoods = async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM foods');
+    const { rows } = await db.query('SELECT * FROM foods ORDER BY id ASC');
     res.json(rows);
   } catch (err) {
     console.error('Database Query Error:', err.message);

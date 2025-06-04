@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import FoodReview from './FoodReview';
+import FoodReview from './FoodDetails';
 
 export default function RestaurantDetails({ restaurants }) {
   const { id } = useParams();

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 
 export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
   const popupRef = useRef(null);
@@ -26,9 +27,38 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
     confirmPassword: ''
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Handle sign up logic here
+
+  if (formData.password !== formData.confirmPassword) {
+    alert('Passwords do not match!');
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.emailOrPhone,
+      password: formData.password,
+      options: {
+        data: {
+          full_name: formData.fullName, // optional metadata
+        },
+      },
+    });
+
+    if (error) {
+      console.error('Signup error:', error.message);
+      alert(error.message);
+    } else {
+      console.log('Signup successful:', data);
+      alert('Signup successful! Please verify your email.');
+      onClose();  // close popup
+    }
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    alert('An unexpected error occurred.');
+  }
     console.log('Sign up attempted with:', formData);
   };
 

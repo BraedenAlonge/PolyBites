@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 
 export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
   const popupRef = useRef(null);
@@ -6,6 +7,8 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
     emailOrPhone: '',
     password: ''
   });
+
+  const [error, setError] = useState('');
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -23,9 +26,26 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
     };
   }, [isOpen, onClose]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle sign in logic here
+    setError('');
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.emailOrPhone,
+        password: formData.password
+      });
+
+      if (error) {
+        setError(error.message);
+      } else {
+        alert('Sign in successful!');
+        onClose();  // Close popup
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setError('An unexpected error occurred.');
+    }
     console.log('Sign in attempted with:', formData);
   };
 

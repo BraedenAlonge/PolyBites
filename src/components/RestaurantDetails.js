@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import FoodReview from './FoodReview';
+import FoodReview from './FoodDetails';
 
 export default function RestaurantDetails({ restaurants }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [selectedFood, setSelectedFood] = useState(null);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const pageRef = useRef(null);
   
   console.log('Restaurants in RestaurantDetails:', restaurants);
@@ -13,6 +16,27 @@ export default function RestaurantDetails({ restaurants }) {
   
   const restaurant = restaurants?.find(r => r.id === parseInt(id));
   console.log('Found restaurant:', restaurant);
+
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/foods/restaurant/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch menu items');
+        }
+        const data = await response.json();
+        setMenuItems(data);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchMenuItems();
+    }
+  }, [id]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -73,11 +97,15 @@ export default function RestaurantDetails({ restaurants }) {
               Rating: {restaurant.rating} ⭐
             </p>
 
-            {restaurant.menuItems && restaurant.menuItems.length > 0 ? (
+            {loading ? (
+              <div className="text-center py-8">Loading menu items...</div>
+            ) : error ? (
+              <div className="text-center text-red-600 py-8">Error: {error}</div>
+            ) : menuItems.length > 0 ? (
               <div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">Menu Items</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {restaurant.menuItems.map((item) => (
+                  {menuItems.map((item) => (
                     <div
                       key={item.id}
                       onClick={() => setSelectedFood(item)}
@@ -85,7 +113,7 @@ export default function RestaurantDetails({ restaurants }) {
                     >
                       <div className="relative h-48 mb-3 overflow-hidden rounded">
                         <img
-                          src={item.image}
+                          src={item.image_url || 'https://via.placeholder.com/300x200?text=No+Image'}
                           alt={item.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                         />

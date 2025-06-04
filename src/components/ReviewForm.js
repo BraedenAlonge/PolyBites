@@ -8,7 +8,7 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
     e.preventDefault();
     onSubmit({
       user_id: 1, // Temporary hardcoded user ID until auth is implemented
-      food_id: 1,//foodItem.id,
+      food_id: foodItem.id,
       rating,
       text: reviewText
     });

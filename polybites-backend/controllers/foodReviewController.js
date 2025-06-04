@@ -24,6 +24,17 @@ export const getFoodReviewById = async (req, res) => {
   }
 };
 
+export const getFoodReviewsByFoodId = async (req, res) => {
+  const { foodId } = req.params;
+  try {
+    const { rows } = await db.query('SELECT * FROM food_reviews WHERE food_id = $1 ORDER BY id ASC', [foodId]);
+    res.json(rows);
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const createFoodReview = async (req, res) => {
   const { user_id, food_id, rating, text } = req.body;
 

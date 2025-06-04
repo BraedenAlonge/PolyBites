@@ -2,8 +2,13 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Restaurant from "./components/Restaurant";
 import RestaurantDetails from "./components/RestaurantDetails";
+
+// Login
 import SignInPopup from "./components/SignInPopup";
 import SignUpPopup from "./components/SignUpPopup";
+import { AuthProvider } from "./context/AuthContext";
+
+import Navbar from "./components/Navbar";
 import "./styles/App.css"
 
 
@@ -21,32 +26,25 @@ function Layout({ children }) {
     setIsSignInOpen(true);
   };
 
-  return (
+    return (
     <div className="min-h-screen bg-green-50">
-      <header className="bg-green-600 text-white shadow-lg py-2 px-4 sticky top-0 z-50">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Poly Bites 🍽️</h1>
-          <button 
-            onClick={() => setIsSignInOpen(true)}
-            className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
-          >
-            Sign In
-          </button>
-        </div>
-      </header>
+      {/* Use Navbar */}
+      <Navbar onSignInOpen={() => setIsSignInOpen(true)} />
 
-      <SignInPopup 
+      {/* Popups */}
+      <SignInPopup
         isOpen={isSignInOpen}
         onClose={() => setIsSignInOpen(false)}
         onSwitchToSignUp={handleSwitchToSignUp}
       />
 
-      <SignUpPopup 
+      <SignUpPopup
         isOpen={isSignUpOpen}
         onClose={() => setIsSignUpOpen(false)}
         onSwitchToSignIn={handleSwitchToSignIn}
       />
 
+      {/* Children */}
       {children}
     </div>
   );
@@ -98,19 +96,21 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route 
-            path="/" 
-            element={<HomePage restaurants={restaurants} loading={loading} error={error} />} 
-          />
-          <Route 
-            path="/restaurant/:id" 
-            element={<RestaurantDetails restaurants={restaurants} />} 
-          />
-        </Routes>
-      </Layout>
-    </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Layout>
+            <Routes>
+              <Route
+                path="/"
+                element={<HomePage restaurants={restaurants} loading={loading} error={error} />}
+              />
+              <Route
+                path="/restaurant/:id"
+                element={<RestaurantDetails restaurants={restaurants} />}
+              />
+            </Routes>
+          </Layout>
+        </BrowserRouter>
+      </AuthProvider>
   );
 }

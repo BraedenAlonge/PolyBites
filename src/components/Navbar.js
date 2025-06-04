@@ -1,0 +1,35 @@
+import React from 'react';
+import { useAuth } from '../context/AuthContext';
+
+export default function Navbar({ onSignInOpen }) {
+  const { user, logout } = useAuth();
+
+  return (
+    <header className="bg-green-600 text-white shadow-lg py-2 px-4 sticky top-0 z-50">
+      <div className="container mx-auto flex justify-between items-center">
+        {/* Logo or App Name */}
+        <h1 className="text-3xl font-bold">Poly Bites 🍽️</h1>
+
+        {/* Right Side */}
+        {user ? (
+          <div className="flex items-center space-x-4">
+            <span className="text-white">Welcome, {user.email}</span>
+            <button
+              onClick={logout}
+              className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onSignInOpen}
+            className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
+          >
+            Sign In
+          </button>
+        )}
+      </div>
+    </header>
+  );
+}

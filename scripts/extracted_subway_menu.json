@@ -1,0 +1,20 @@
+[
+  {
+    "restaurant": "SUBWAY ®",
+    "name": "Chicken & Cheese Dipper",
+    "description": "(580 Cal.) Treat yourself to tender chicken strips draped in melty American cheese and rolled up in two 6\" pieces of our pillowy Lavash wrap, then toasted golden. This savory snack will keep you coming back for more. Choose one of our dipping sauces and dip into delicious with every bite.",
+    "priceUSD": "4.88"
+  },
+  {
+    "restaurant": "SUBWAY ®",
+    "name": "B.L.T.",
+    "description": "The sub that proves great things come in threes. In this case, those three things happen to be hickory smoked bacon, lettuce and juicy tomatoes. While there’s no scientific way of proving it, this B.L.T might be the most perfect sub in existence.",
+    "priceUSD": "9.86"
+  },
+  {
+    "restaurant": "SUBWAY ®",
+    "name": "#1 The Philly Steak & Cheese",
+    "description": "The classic cheesesteak stacked with juicy steak and a double helping of American cheese toasted on Artisan Italian bread and topped with green peppers, red onions and mayo.",
+    "priceUSD": "10.35"
+  }
+]

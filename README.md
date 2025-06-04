@@ -11,7 +11,7 @@ SUPABASE_URL=https://[YOUR-URL].supabase.co
 SUPABASE_ANON_KEY=[ANON-PASSWORD]
 Your URL may be different. Copy the specific transaction pooler [TRANSAC-POOL] and [PORT] 
 connection part in the link under:
-Connect -> Transaction pooler
+Connect -> Transaction pooler   
 To get the [DB-PASSWORD]:
 Ask owner
 Copy and paste the password into the URL
@@ -21,3 +21,8 @@ Project Settings -> API Keys -> Copy the first link.
 
 IMPORTANT: Make sure that you add a .gitignore file and paste the following inside:
 .env
+
+## Running the backend:
+cd into polybites-backend
+run: npm start 
+Go to: http://localhost:5000/api/restaurants

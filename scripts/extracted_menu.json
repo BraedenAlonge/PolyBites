@@ -1,0 +1,32 @@
+[
+  {
+    "restaurant": "Kona's Deli",
+    "name": "Jalapeno BLTA   Sandwich",
+    "description": "Heated & Toasted; Jalapeno bacon, lettuce, tomatoes, avocado.",
+    "priceUSD": "11.49"
+  },
+  {
+    "restaurant": "Kona's Deli",
+    "name": "Flaming Hot Cheetos",
+    "description": "Hot cheetos.",
+    "priceUSD": "2.60"
+  },
+  {
+    "restaurant": "Kona's Deli",
+    "name": "Big Tuna Sandwich",
+    "description": "Homemade tuna by Konas.",
+    "priceUSD": "11.49"
+  },
+  {
+    "restaurant": "Kona's Deli",
+    "name": "The Swell  Sandwich",
+    "description": "Turkey, cranberry, cream cheese.",
+    "priceUSD": "10.49"
+  },
+  {
+    "restaurant": "Kona's Deli",
+    "name": "Regular Lay’s Chips",
+    "description": "Lay's.",
+    "priceUSD": "2.10"
+  }
+]

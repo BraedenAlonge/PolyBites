@@ -2,7 +2,7 @@ import db from '../models/db.js';
 
 export const getUsers = async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT id, username, email, created_at FROM users');
+    const { rows } = await db.query('SELECT id, name, email, created_at FROM users');
     res.json(rows);
   } catch (err) {
     console.error('Database Query Error:', err.message);
@@ -14,7 +14,7 @@ export const getUserById = async (req, res) => {
   const { id } = req.params;
   try {
     const { rows } = await db.query(
-      'SELECT id, username, email, created_at FROM users WHERE id = $1',
+      'SELECT id, name, email, created_at FROM users WHERE id = $1',
       [id]
     );
     if (rows.length === 0) {

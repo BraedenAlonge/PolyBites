@@ -6,6 +6,27 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userNames, setUserNames] = useState({});
+
+  const fetchUserName = async (userId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/${userId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch user');
+      }
+      const userData = await response.json();
+      setUserNames(prev => ({
+        ...prev,
+        [userId]: userData.name
+      }));
+    } catch (err) {
+      console.error('Error fetching user:', err);
+      setUserNames(prev => ({
+        ...prev,
+        [userId]: 'Unknown User'
+      }));
+    }
+  };
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -18,6 +39,13 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
         }
         const data = await response.json();
         setReviews(data);
+        
+        // Fetch user names for each review
+        const uniqueUserIds = [...new Set(data.map(review => review.user_id))];
+        uniqueUserIds.forEach(userId => {
+          fetchUserName(userId);
+        });
+        
         setLoading(false);
       } catch (err) {
         console.error('Error fetching reviews:', err);
@@ -52,6 +80,12 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
       if (updatedResponse.ok) {
         const updatedReviews = await updatedResponse.json();
         setReviews(updatedReviews);
+        
+        // Fetch user name for the new review if needed
+        const newUserId = reviewData.user_id;
+        if (!userNames[newUserId]) {
+          fetchUserName(newUserId);
+        }
       }
 
       setIsWritingReview(false);
@@ -115,7 +149,9 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                     {reviews.map((review) => (
                       <div key={review.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-800">User #{review.user_id}</span>
+                          <span className="font-medium text-gray-800">
+                            {userNames[review.user_id] || 'User # ' + review.user_id}
+                          </span>
                           <span className="text-green-600">{'⭐'.repeat(review.rating)}</span>
                         </div>
                         <p className="text-gray-600">{review.text}</p>

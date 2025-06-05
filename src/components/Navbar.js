@@ -45,12 +45,16 @@ export default function Navbar({ onSignInOpen }) {
             </button>
           </div>
         ) : (
+          <div className="flex items-center space-x-4">
+          <span className="text-white">Welcome, Guest</span>
+
           <button
             onClick={onSignInOpen}
             className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
           >
             Sign In
           </button>
+          </div>
         )}
       </div>
     </header>

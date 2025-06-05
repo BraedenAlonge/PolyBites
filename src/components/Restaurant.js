@@ -116,14 +116,6 @@ export default function Restaurant({ data }) {
             <span className="text-gray-500 text-sm ml-2">{data.Location}</span>
           )}
         </div>
-        {data.description && (
-          <p className="text-gray-600 text-sm mb-2">
-            {data.description.length > 80
-              ? data.description.slice(0, 80) + '...'
-              : data.description}
-          </p>
-        )}
-
         <div className="space-y-1">
           {!data.menuItems && (
             <p className="text-gray-500 text-sm"><strong>{menuItemCount}</strong> menu items</p>

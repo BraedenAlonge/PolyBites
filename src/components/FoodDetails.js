@@ -40,6 +40,12 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     }
   };
 
+  function formatName(fullName) {
+  if (!fullName) return '';
+  const [firstName, lastName] = fullName.trim().split(' ');
+  return lastName ? `${firstName} ${lastName[0]}.` : firstName;
+  }
+
   const fetchUserName = async (userId) => {
     try {
       const response = await fetch(`http://localhost:5000/api/profiles/auth/${userId}`);
@@ -195,7 +201,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                       <div key={review.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium text-gray-800">
-                            {userNames[review.user_id] || 'User # ' + review.user_id}
+                            {formatName(userNames[review.user_id]) || 'User # ' + review.user_id}
                           </span>
                           <span className="text-green-600">{'⭐'.repeat(review.rating)}</span>
                         </div>

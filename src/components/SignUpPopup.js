@@ -27,39 +27,73 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
     confirmPassword: ''
   });
 
+  const createProfile = async (userId) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/profiles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          auth_id: userId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create profile');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating profile:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle sign up logic here
 
-  if (formData.password !== formData.confirmPassword) {
-    alert('Passwords do not match!');
-    return;
-  }
-
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.emailOrPhone,
-      password: formData.password,
-      options: {
-        data: {
-          full_name: formData.fullName, // optional metadata
-        },
-      },
-    });
-
-    if (error) {
-      console.error('Signup error:', error.message);
-      alert(error.message);
-    } else {
-      console.log('Signup successful:', data);
-      alert('Signup successful! Please verify your email.');
-      onClose();  // close popup
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match!');
+      return;
     }
-  } catch (err) {
-    console.error('Unexpected error:', err);
-    alert('An unexpected error occurred.');
-  }
-    console.log('Sign up attempted with:', formData);
+
+    try {
+      // 1. Sign up with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.emailOrPhone,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.fullName,
+          },
+        },
+      });
+
+      if (authError) {
+        console.error('Signup error:', authError.message);
+        alert(authError.message);
+        return;
+      }
+
+      // 2. Create profile in our database
+      try {
+        await createProfile(authData.user.id);
+        console.log('Profile created successfully');
+        alert('Signup successful! Please verify your email.');
+        onClose();
+      } catch (profileError) {
+        console.error('Profile creation error:', profileError);
+        alert('Account created but profile setup failed. Please contact support.');
+        
+        // You might want to delete the auth user here if profile creation fails
+        // This would require admin privileges in Supabase
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      alert('An unexpected error occurred.');
+    }
   };
 
   const handleChange = (e) => {

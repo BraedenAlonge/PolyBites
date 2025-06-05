@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+
 
 export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
+  const { user } = useAuth();
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
-      user_id: 1, // Temporary hardcoded user ID until auth is implemented
+      user_id: user.id, // Temporary hardcoded user ID until auth is implemented
       food_id: foodItem.id,
       rating,
       text: reviewText

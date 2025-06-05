@@ -10,9 +10,9 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
 
   const fetchUserName = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${userId}`);
+      const response = await fetch(`http://localhost:5000/api/profiles/auth/${userId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch user');
+        throw new Error('Failed to fetch profile');
       }
       const userData = await response.json();
       setUserNames(prev => ({
@@ -20,10 +20,10 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
         [userId]: userData.name
       }));
     } catch (err) {
-      console.error('Error fetching user:', err);
+      console.error('Error fetching profile:', err);
       setUserNames(prev => ({
         ...prev,
-        [userId]: 'Unknown User'
+        [userId]: 'User #' + userId
       }));
     }
   };

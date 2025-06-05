@@ -112,11 +112,11 @@ export default function Restaurant({ data }) {
 
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-xl font-bold text-gray-800 mb-2">{data.name || 'Unnamed Restaurant'}</h2>
-          {data.Location && (
-            <span className="text-gray-500 text-sm ml-2">{data.Location}</span>
-          )}
         </div>
         <div className="space-y-1">
+          {data.Location && (
+              <p className="text-gray-600 text-sm mb-2"> {data.Location}</p>
+          )}
           {!data.menuItems && (
             <p className="text-gray-500 text-sm"><strong>{menuItemCount}</strong> menu items</p>
           )}

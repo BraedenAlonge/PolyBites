@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReviewForm from './ReviewForm';
+import { useAuth } from '../context/AuthContext';
+import SignInPopup from './SignInPopup';
+import SignUpPopup from './SignUpPopup';
 
 export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [isWritingReview, setIsWritingReview] = useState(false);
@@ -7,6 +10,35 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userNames, setUserNames] = useState({});
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
+  const { user } = useAuth();
+
+  const handleCloseSignIn = () => {
+    setShowSignIn(false);
+  };
+
+  const handleCloseSignUp = () => {
+    setShowSignUp(false);
+  };
+
+  const handleSwitchToSignUp = () => {
+    setShowSignIn(false);
+    setShowSignUp(true);
+  };
+
+  const handleSwitchToSignIn = () => {
+    setShowSignUp(false);
+    setShowSignIn(true);
+  };
+
+  const handleWriteReviewClick = () => {
+    if (user) {
+      setIsWritingReview(true);
+    } else {
+      setShowSignUp(true);
+    }
+  };
 
   const fetchUserName = async (userId) => {
     try {
@@ -120,13 +152,26 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
             </div>
             {!isWritingReview && (
               <button
-                onClick={() => setIsWritingReview(true)}
+                onClick={handleWriteReviewClick}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 Write a Review
               </button>
             )}
           </div>
+
+          {/* Add SignIn/SignUp Popups */}
+          <SignInPopup 
+            isOpen={showSignIn} 
+            onClose={handleCloseSignIn}
+            onSwitchToSignUp={handleSwitchToSignUp}
+          />
+          
+          <SignUpPopup
+            isOpen={showSignUp}
+            onClose={handleCloseSignUp}
+            onSwitchToSignIn={handleSwitchToSignIn}
+          />
 
           {isWritingReview ? (
             <ReviewForm

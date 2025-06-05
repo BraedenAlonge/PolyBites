@@ -10,9 +10,27 @@ export default function RestaurantDetails({ restaurants }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const pageRef = useRef(null);
-  
-  console.log('Restaurants in RestaurantDetails:', restaurants);
-  console.log('Looking for restaurant with id:', id);
+  const [showSignIn, setShowSignIn] = useState(false);
+  const [showSignUp, setShowSignUp] = useState(false);
+
+
+  const handleCloseSignIn = () => {
+    setShowSignIn(false);
+  };
+
+  const handleCloseSignUp = () => {
+    setShowSignUp(false);
+  };
+
+  const handleSwitchToSignUp = () => {
+    setShowSignIn(false);
+    setShowSignUp(true);
+  };
+
+  const handleSwitchToSignIn = () => {
+    setShowSignUp(false);
+    setShowSignIn(true);
+  };
   
   const restaurant = restaurants?.find(r => r.id === parseInt(id));
   console.log('Found restaurant:', restaurant);

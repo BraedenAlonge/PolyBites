@@ -56,9 +56,22 @@ function HomePage({ restaurants, loading, error }) {
   const [hasSearched, setHasSearched] = useState(false);
   const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
 
+  // Animation state for subtitle lines
+  const [subtitleVisible, setSubtitleVisible] = useState([false, false, false]);
+
   useEffect(() => {
     setFilteredRestaurants(restaurants);
   }, [restaurants]);
+
+  useEffect(() => {
+    // Sequentially show each line
+    const timers = [
+      setTimeout(() => setSubtitleVisible(v => [true, false, false]), 600),
+      setTimeout(() => setSubtitleVisible(v => [true, true, false]), 1300),
+      setTimeout(() => setSubtitleVisible([true, true, true]), 2000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -73,20 +86,51 @@ function HomePage({ restaurants, loading, error }) {
   return (
     <main>
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white py-16 mb-12">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 animate-fade-in">
+      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white py-16 mb-12 relative overflow-hidden" style={{ height: '70vh', minHeight: 500 }}>
+        {/* Opaque food image background */}
+        <img
+          src={require('./assets/images/green-back.jpeg')}
+          alt="Food background"
+          className="absolute inset-0 w-full h-full object-cover opacity-85 pointer-events-none select-none"
+          style={{ zIndex: 0, minHeight: 600 }}
+        />
+        {/* Overlay for better blending */}
+        <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1 }}></div>
+        <div className="container mx-auto px-4 text-center relative z-10 flex flex-col justify-center items-center h-full">
+          <h1 className="text-8xl md:text-8xl font-extrabold mb-8 animate-fade-in">
             Poly Bites
           </h1>
-          <p className="text-xl md:text-2xl text-green-100 mb-8">
-            Your Ratings. Your Reviews. Your Restaurants.
+          <p className="text-4xl md:text-4xl text-green-100 mb-12 font-semibold">
+            <span className={`block transition-all duration-700 ${subtitleVisible[0] ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>Your Ratings.</span>
+            <span className={`block transition-all duration-700 ${subtitleVisible[1] ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>Your Reviews.</span>
+            <span className={`block transition-all duration-700 ${subtitleVisible[2] ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>Your Restaurants.</span>
           </p>
           <div className="w-24 h-1 bg-white mx-auto rounded-full opacity-50"></div>
+        </div>
+        {/* Wave SVG divider */}
+        <div className="absolute left-0 right-0 bottom-0 w-full overflow-hidden leading-none pointer-events-none" style={{zIndex: 2, lineHeight: 0}}>
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 1440 490"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            className="w-full h-40"
+            style={{ display: 'block', width: '100%', height: '100%' }}
+          >
+            <path
+              d="M 0,500 L 0,400 C 53.00858811405017,423.5073857780831 106.01717622810034,447.01477155616627 181,445 C 255.98282377189966,442.98522844383373 352.9398832016489,415.4482995534181 427,396 C 501.0601167983511,376.5517004465819 552.2232909653039,365.19203023016146 602,374 C 651.7767090346961,382.80796976983854 700.166952937135,411.7835795259361 784,415 C 867.833047062865,418.2164204740639 987.108897286156,395.67365166609413 1059,381 C 1130.891102713844,366.32634833390587 1155.3974579182411,359.5218138096874 1211,364 C 1266.6025420817589,368.4781861903126 1353.3012710408793,384.2390930951563 1440,400 L 1440,500 L 0,500 Z"
+              stroke="none"
+              strokeWidth="0"
+              fill="#f0fdf4"
+              fillOpacity="1"
+            />
+          </svg>
         </div>
       </div>
 
       {/* Restaurants Section */}
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 -mt-12">
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-600 mb-4"></div>

@@ -36,7 +36,7 @@ export default function Navbar({ onSignInOpen }) {
         {/* Right Side */}
         {user ? (
           <div className="flex items-center space-x-4">
-            <span className="text-white">Welcome, {userName || 'Guest'}</span>
+            <span className="text-white">Welcome, {userName.split(' ')[0] || 'Guest'}</span>
             <button
               onClick={logout}
               className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"

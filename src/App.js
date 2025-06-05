@@ -51,6 +51,25 @@ function Layout({ children }) {
 }
 
 function HomePage({ restaurants, loading, error }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredRestaurants, setFilteredRestaurants] = useState(restaurants);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
+
+  useEffect(() => {
+    setFilteredRestaurants(restaurants);
+  }, [restaurants]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setDisplayedSearchTerm(searchTerm);
+    const filtered = restaurants.filter(restaurant => 
+      restaurant.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredRestaurants(filtered);
+    setHasSearched(true);
+  };
+
   return (
     <main>
       {/* Hero Section */}
@@ -81,14 +100,40 @@ function HomePage({ restaurants, loading, error }) {
           </div>
         ) : (
           <>
-            <h2 className="text-2xl font-semibold text-gray-800 mb-6">All Restaurants</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
-              {restaurants.map((restaurant) => (
-                <Restaurant
-                  key={restaurant.id}
-                  data={restaurant}
-                />
-              ))}
+            <div className="max-w-7xl mx-auto">
+              <div className="flex flex-col space-y-4 mb-6">
+                <h2 className="text-2xl font-semibold text-gray-800">
+                  {hasSearched && displayedSearchTerm.trim() ? `Results for "${displayedSearchTerm}"` : 'All Restaurants'}
+                </h2>
+                <form onSubmit={handleSearch} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search restaurants..."
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    Search
+                  </button>
+                </form>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
+                {filteredRestaurants.map((restaurant) => (
+                  <Restaurant
+                    key={restaurant.id}
+                    data={restaurant}
+                  />
+                ))}
+                {filteredRestaurants.length === 0 && hasSearched && (
+                  <div className="col-span-2 text-center py-8 text-gray-500">
+                    No restaurants found matching "{displayedSearchTerm}"
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}

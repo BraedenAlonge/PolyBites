@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import ReviewForm from './ReviewForm';
 
+function formatName(fullName) {
+  if (!fullName) return '';
+  const [firstName, lastName] = fullName.trim().split(' ');
+  return lastName ? `${firstName} ${lastName[0]}.` : firstName;
+}
+
 export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [isWritingReview, setIsWritingReview] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -31,7 +37,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   useEffect(() => {
     const fetchReviews = async () => {
       if (!foodItem?.id) return;
-      
+
       try {
         const response = await fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
         if (!response.ok) {
@@ -150,7 +156,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                       <div key={review.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium text-gray-800">
-                            {userNames[review.user_id] || 'User # ' + review.user_id}
+                            {formatName(userNames[review.user_id]) || 'User # ' + review.user_id}
                           </span>
                           <span className="text-green-600">{'⭐'.repeat(review.rating)}</span>
                         </div>

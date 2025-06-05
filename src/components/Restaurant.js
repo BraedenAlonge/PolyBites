@@ -23,6 +23,8 @@ const fetchFoodReviewDetails = async () => {
 };
 
 export default function Restaurant({ data }) {
+  console.log('Restaurant component received data:', data);
+
   const [menuItemCount, setMenuItemCount] = useState(0);
   const [reviewDetails, setReviewDetails] = useState({
     review_count: 0,
@@ -31,32 +33,66 @@ export default function Restaurant({ data }) {
 
   useEffect(() => {
     const getMenuItemCount = async () => {
-      if (!data.menuItems) {
+      if (!data?.id || data?.menuItems) return;
+      try {
         const count = await fetchNumberOfFoods(data.id);
         setMenuItemCount(count);
+      } catch (error) {
+        console.error('Error fetching menu items count:', error);
+        setMenuItemCount(0);
       }
     };
 
     getMenuItemCount();
-  }, [data.id, data.menuItems]);
+  }, [data?.id, data?.menuItems]);
 
   useEffect(() => {
     const getReviewDetails = async () => {
-      const allDetails = await fetchFoodReviewDetails();
-      const restaurantDetails = allDetails.find(detail => detail.restaurant_id === data.id) || {
-        review_count: 0,
-        average_rating: 0
-      };
-      setReviewDetails(restaurantDetails);
+      if (!data?.id) return;
+      
+      try {
+        const allDetails = await fetchFoodReviewDetails();
+        const restaurantDetails = allDetails.find(detail => detail.restaurant_id === data?.id) || {
+          review_count: 0,
+          average_rating: 0
+        };
+        setReviewDetails(restaurantDetails);
+      } catch (error) {
+        console.error('Error fetching review details:', error);
+        setReviewDetails({
+          review_count: 0,
+          average_rating: 0
+        });
+      }
     };
 
     getReviewDetails();
-  }, [data.id]);
+  }, [data?.id]);
 
   // Format the average rating to one decimal place
-  const formattedRating = Number(reviewDetails.average_rating).toFixed(1);
-  console.log(data.Location);
-  console.log("JEllo");
+
+  const formattedRating = Number(reviewDetails?.average_rating || 0).toFixed(1);
+
+  // Return early with loading state if data is not yet available
+  if (!data) {
+    console.log('No data provided to Restaurant component');
+    return (
+      <div className="block bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 p-4">
+        <p className="text-gray-500">Loading restaurant data...</p>
+      </div>
+    );
+  }
+
+  // Return early if no ID is available
+  if (!data.id) {
+    console.log('No restaurant ID provided');
+    return (
+      <div className="block bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 p-4">
+        <p className="text-gray-500">Invalid restaurant data</p>
+      </div>
+    );
+  }
+
   return (
     <Link
       to={`/restaurant/${data.id}`}
@@ -64,8 +100,8 @@ export default function Restaurant({ data }) {
     >
       <div className="relative">
         <img
-          src={data.image}
-          alt={data.name}
+          src={data.image || 'https://via.placeholder.com/400x300?text=No+Image'}
+          alt={data.name || 'Restaurant'}
           className="w-full h-48 object-cover"
         />
         <div className="absolute top-0 right-0 m-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -73,8 +109,9 @@ export default function Restaurant({ data }) {
         </div>
       </div>
       <div className="p-5">
+
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-xl font-bold text-gray-800">{data.name}</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{data.name || 'Unnamed Restaurant'}</h2>
           {data.Location && (
             <span className="text-gray-500 text-sm ml-2">{data.Location}</span>
           )}
@@ -86,6 +123,7 @@ export default function Restaurant({ data }) {
               : data.description}
           </p>
         )}
+
         <div className="space-y-1">
           {!data.menuItems && (
             <p className="text-gray-500 text-sm"><strong>{menuItemCount}</strong> menu items</p>

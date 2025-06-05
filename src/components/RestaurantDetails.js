@@ -9,31 +9,10 @@ export default function RestaurantDetails({ restaurants }) {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [averageRating, setAverageRating] = useState(0);
   const pageRef = useRef(null);
-  const [showSignIn, setShowSignIn] = useState(false);
-  const [showSignUp, setShowSignUp] = useState(false);
-
-
-  const handleCloseSignIn = () => {
-    setShowSignIn(false);
-  };
-
-  const handleCloseSignUp = () => {
-    setShowSignUp(false);
-  };
-
-  const handleSwitchToSignUp = () => {
-    setShowSignIn(false);
-    setShowSignUp(true);
-  };
-
-  const handleSwitchToSignIn = () => {
-    setShowSignUp(false);
-    setShowSignIn(true);
-  };
   
   const restaurant = restaurants?.find(r => r.id === parseInt(id));
-  console.log('Found restaurant:', restaurant);
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -51,8 +30,24 @@ export default function RestaurantDetails({ restaurants }) {
       }
     };
 
+    const fetchRestaurantRating = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/food-reviews/food-review-details`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch ratings');
+        }
+        const data = await response.json();
+        const restaurantRating = data.find(r => r.restaurant_id === parseInt(id));
+        setAverageRating(restaurantRating?.average_rating || 0);
+      } catch (err) {
+        console.error('Error fetching restaurant rating:', err);
+        setAverageRating(0);
+      }
+    };
+
     if (id) {
       fetchMenuItems();
+      fetchRestaurantRating();
     }
   }, [id]);
 
@@ -71,6 +66,11 @@ export default function RestaurantDetails({ restaurants }) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [selectedFood]);
+
+  const renderStars = (rating) => {
+    const roundedRating = Math.round(rating);
+    return '⭐'.repeat(roundedRating);
+  };
 
   if (!restaurant) {
     return (
@@ -109,9 +109,12 @@ export default function RestaurantDetails({ restaurants }) {
           />
           <div className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-3xl font-semibold text-gray-800">
+              <h2 className="text-3xl font-semibold text-gray-800 mb-2">
                 {restaurant.name}
               </h2>
+            <div className="text-green-600 font-medium text-lg mb-6 flex items-center gap-2">
+              <span>Rating: {Number(averageRating).toFixed(1)}</span>
+              <span className="text-2xl">{renderStars(averageRating)}</span>
               {restaurant.Location && (
                 <span className="text-gray-500 text-2xl ml-4">{restaurant.Location}</span>
               )}

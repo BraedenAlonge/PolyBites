@@ -89,7 +89,7 @@ function HomePage({ restaurants, loading, error }) {
       <div className="bg-gradient-to-b from-green-600 to-green-500 text-white py-16 mb-12 relative overflow-hidden" style={{ height: '70vh', minHeight: 500 }}>
         {/* Opaque food image background */}
         <img
-          src={require('./assets/images/green-back.jpeg')}
+          src={require('./assets/images/food-back.jpg')}
           alt="Food background"
           className="absolute inset-0 w-full h-full object-cover opacity-85 pointer-events-none select-none"
           style={{ zIndex: 0, minHeight: 600 }}
@@ -119,7 +119,7 @@ function HomePage({ restaurants, loading, error }) {
             style={{ display: 'block', width: '100%', height: '100%' }}
           >
             <path
-              d="M 0,500 L 0,400 C 53.00858811405017,423.5073857780831 106.01717622810034,447.01477155616627 181,445 C 255.98282377189966,442.98522844383373 352.9398832016489,415.4482995534181 427,396 C 501.0601167983511,376.5517004465819 552.2232909653039,365.19203023016146 602,374 C 651.7767090346961,382.80796976983854 700.166952937135,411.7835795259361 784,415 C 867.833047062865,418.2164204740639 987.108897286156,395.67365166609413 1059,381 C 1130.891102713844,366.32634833390587 1155.3974579182411,359.5218138096874 1211,364 C 1266.6025420817589,368.4781861903126 1353.3012710408793,384.2390930951563 1440,400 L 1440,500 L 0,500 Z"
+              d="M -100,500 L -100,400 C -47,423.5 6,447 81,445 C 156,443 253,415.4 327,396 C 401,376.5 452,365.2 502,374 C 552,382.8 600,411.8 684,415 C 768,418.2 887,395.7 959,381 C 1031,366.3 1055,359.5 1111,364 C 1167,368.5 1253,384.2 1340,400 L 1440,400 L 1440,500 L -100,500 Z"
               stroke="none"
               strokeWidth="0"
               fill="#f0fdf4"

@@ -56,9 +56,22 @@ function HomePage({ restaurants, loading, error }) {
   const [hasSearched, setHasSearched] = useState(false);
   const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
 
+  // Animation state for subtitle lines
+  const [subtitleVisible, setSubtitleVisible] = useState([false, false, false]);
+
   useEffect(() => {
     setFilteredRestaurants(restaurants);
   }, [restaurants]);
+
+  useEffect(() => {
+    // Sequentially show each line
+    const timers = [
+      setTimeout(() => setSubtitleVisible(v => [true, false, false]), 600),
+      setTimeout(() => setSubtitleVisible(v => [true, true, false]), 1300),
+      setTimeout(() => setSubtitleVisible([true, true, true]), 2000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -73,20 +86,51 @@ function HomePage({ restaurants, loading, error }) {
   return (
     <main>
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white py-16 mb-12">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 animate-fade-in">
+      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white py-16 mb-12 relative overflow-hidden" style={{ height: '70vh', minHeight: 500 }}>
+        {/* Opaque food image background */}
+        <img
+          src={require('./assets/images/food-back.jpg')}
+          alt="Food background"
+          className="absolute inset-0 w-full h-full object-cover opacity-85 pointer-events-none select-none"
+          style={{ zIndex: 0, minHeight: 600 }}
+        />
+        {/* Overlay for better blending */}
+        <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1 }}></div>
+        <div className="container mx-auto px-4 text-center relative z-10 flex flex-col justify-center items-center h-full">
+          <h1 className="text-8xl md:text-8xl font-extrabold mb-8 animate-fade-in">
             Poly Bites
           </h1>
-          <p className="text-xl md:text-2xl text-green-100 mb-8">
-            Your Ratings. Your Reviews. Your Restaurants.
+          <p className="text-4xl md:text-4xl text-green-100 mb-12 font-semibold">
+            <span className={`block transition-all duration-700 ${subtitleVisible[0] ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>Your Ratings.</span>
+            <span className={`block transition-all duration-700 ${subtitleVisible[1] ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>Your Reviews.</span>
+            <span className={`block transition-all duration-700 ${subtitleVisible[2] ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>Your Restaurants.</span>
           </p>
           <div className="w-24 h-1 bg-white mx-auto rounded-full opacity-50"></div>
+        </div>
+        {/* Wave SVG divider */}
+        <div className="absolute left-0 right-0 bottom-0 w-full overflow-hidden leading-none pointer-events-none" style={{zIndex: 2, lineHeight: 0}}>
+          <svg
+            width="100%"
+            height="100%"
+            viewBox="0 0 1440 490"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            className="w-full h-40"
+            style={{ display: 'block', width: '100%', height: '100%' }}
+          >
+            <path
+              d="M -100,500 L -100,400 C -47,423.5 6,447 81,445 C 156,443 253,415.4 327,396 C 401,376.5 452,365.2 502,374 C 552,382.8 600,411.8 684,415 C 768,418.2 887,395.7 959,381 C 1031,366.3 1055,359.5 1111,364 C 1167,368.5 1253,384.2 1340,400 L 1440,400 L 1440,500 L -100,500 Z"
+              stroke="none"
+              strokeWidth="0"
+              fill="#f0fdf4"
+              fillOpacity="1"
+            />
+          </svg>
         </div>
       </div>
 
       {/* Restaurants Section */}
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 -mt-12">
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-600 mb-4"></div>

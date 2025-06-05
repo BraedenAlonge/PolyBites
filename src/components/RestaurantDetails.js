@@ -112,17 +112,13 @@ export default function RestaurantDetails({ restaurants }) {
               <h2 className="text-3xl font-semibold text-gray-800">
                 {restaurant.name}
               </h2>
-              <div className="flex items-center gap-4">
-                <div className="text-green-600 font-medium text-lg flex items-center gap-2">
-                  <span>Rating: {Number(averageRating).toFixed(1)}</span>
-                  <span className="text-2xl">{renderStars(averageRating)}</span>
-                </div>
-                {restaurant.Location && (
-                  <span className="text-gray-500 text-lg">{restaurant.Location}</span>
-                )}
-              </div>
-              {restaurant.description && (
-                <p className="text-gray-600 text-base">{restaurant.description}</p>
+            </div>
+            <div className="text-green-600 font-medium text-lg mb-6 flex items-center gap-2">
+              <span>Rating: {Number(averageRating).toFixed(1)}</span>
+              <span className="text-2xl">{renderStars(averageRating)}</span>
+              {restaurant.Location && (
+                <span className="text-gray-500 text-2xl ml-4">{restaurant.Location}</span>
+
               )}
             </div>
 

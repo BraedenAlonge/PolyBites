@@ -111,8 +111,20 @@ export default function Restaurant({ data }) {
       <div className="p-5">
 
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">{data.name || 'Unnamed Restaurant'}</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{data.name || 'Unnamed Restaurant'}</h2> 
         </div>
+        {data.Location && (
+            <p className="text-gray-400 text-sm mb-2">{data.Location}</p>
+          )}
+        {data.description && (
+          <p className="text-gray-500 text-sm mb-2">
+            {data.description.length > 80
+              ? data.description.slice(0, 80) + '...'
+              : data.description}
+          </p>
+        )}
+
+
         <div className="space-y-1">
           {data.Location && (
               <p className="text-gray-600 text-sm mb-2"> {data.Location}</p>

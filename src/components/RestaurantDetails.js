@@ -108,8 +108,8 @@ export default function RestaurantDetails({ restaurants }) {
             className="w-full h-72 object-cover"
           />
           <div className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-3xl font-semibold text-gray-800 mb-2">
+            <div className="flex flex-col gap-4">
+              <h2 className="text-3xl font-semibold text-gray-800">
                 {restaurant.name}
               </h2>
             </div>
@@ -118,21 +118,16 @@ export default function RestaurantDetails({ restaurants }) {
               <span className="text-2xl">{renderStars(averageRating)}</span>
               {restaurant.Location && (
                 <span className="text-gray-500 text-2xl ml-4">{restaurant.Location}</span>
+
               )}
             </div>
-            {restaurant.description && (
-              <p className="text-gray-600 text-base mb-4">{restaurant.description}</p>
-            )}
-            <p className="text-green-600 font-medium text-lg mb-6">
-              Rating: {restaurant.rating} ⭐
-            </p>
 
             {loading ? (
               <div className="text-center py-8">Loading menu items...</div>
             ) : error ? (
               <div className="text-center text-red-600 py-8">Error: {error}</div>
             ) : menuItems.length > 0 ? (
-              <div>
+              <div className="mt-8">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">Menu Items</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {menuItems.map((item) => (

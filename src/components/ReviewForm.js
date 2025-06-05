@@ -10,7 +10,7 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit({
-      user_id: user.id,
+      user_id: user.id, // Temporary hardcoded user ID until auth is implemented
       food_id: foodItem.id,
       rating,
       text: reviewText

@@ -79,7 +79,7 @@ function HomePage({ restaurants, loading, error }) {
             Poly Bites
           </h1>
           <p className="text-xl md:text-2xl text-green-100 mb-8">
-            Your Restaurants. Your Reviews.
+            Your Ratings. Your Reviews. Your Restaurants.
           </p>
           <div className="w-24 h-1 bg-white mx-auto rounded-full opacity-50"></div>
         </div>

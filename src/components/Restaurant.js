@@ -70,6 +70,7 @@ export default function Restaurant({ data }) {
   }, [data?.id]);
 
   // Format the average rating to one decimal place
+
   const formattedRating = Number(reviewDetails?.average_rating || 0).toFixed(1);
 
   // Return early with loading state if data is not yet available
@@ -108,7 +109,21 @@ export default function Restaurant({ data }) {
         </div>
       </div>
       <div className="p-5">
-        <h2 className="text-xl font-bold text-gray-800 mb-2">{data.name || 'Unnamed Restaurant'}</h2>
+
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{data.name || 'Unnamed Restaurant'}</h2>
+          {data.Location && (
+            <span className="text-gray-500 text-sm ml-2">{data.Location}</span>
+          )}
+        </div>
+        {data.description && (
+          <p className="text-gray-600 text-sm mb-2">
+            {data.description.length > 80
+              ? data.description.slice(0, 80) + '...'
+              : data.description}
+          </p>
+        )}
+
         <div className="space-y-1">
           {!data.menuItems && (
             <p className="text-gray-500 text-sm"><strong>{menuItemCount}</strong> menu items</p>
@@ -117,5 +132,6 @@ export default function Restaurant({ data }) {
         </div>
       </div>
     </Link>
+    
   );
 }

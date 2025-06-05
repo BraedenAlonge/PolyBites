@@ -108,13 +108,23 @@ export default function RestaurantDetails({ restaurants }) {
             className="w-full h-72 object-cover"
           />
           <div className="p-6">
-            <h2 className="text-3xl font-semibold text-gray-800 mb-2">
-              {restaurant.name}
-            </h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-3xl font-semibold text-gray-800 mb-2">
+                {restaurant.name}
+              </h2>
             <div className="text-green-600 font-medium text-lg mb-6 flex items-center gap-2">
               <span>Rating: {Number(averageRating).toFixed(1)}</span>
               <span className="text-2xl">{renderStars(averageRating)}</span>
+              {restaurant.Location && (
+                <span className="text-gray-500 text-2xl ml-4">{restaurant.Location}</span>
+              )}
             </div>
+            {restaurant.description && (
+              <p className="text-gray-600 text-base mb-4">{restaurant.description}</p>
+            )}
+            <p className="text-green-600 font-medium text-lg mb-6">
+              Rating: {restaurant.rating} ⭐
+            </p>
 
             {loading ? (
               <div className="text-center py-8">Loading menu items...</div>

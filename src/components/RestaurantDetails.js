@@ -112,6 +112,7 @@ export default function RestaurantDetails({ restaurants }) {
               <h2 className="text-3xl font-semibold text-gray-800 mb-2">
                 {restaurant.name}
               </h2>
+            </div>
             <div className="text-green-600 font-medium text-lg mb-6 flex items-center gap-2">
               <span>Rating: {Number(averageRating).toFixed(1)}</span>
               <span className="text-2xl">{renderStars(averageRating)}</span>

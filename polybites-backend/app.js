@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 import testRouter from './routes/test.js';
 import restaurantRoutes from './routes/restaurants.js';
-import userRoutes from './routes/users.js';
+import profileRoutes from './routes/profiles.js';
 import foodRoutes from './routes/foods.js';
 import foodReviewRoutes from './routes/foodReviews.js';
 import restaurantReviewRoutes from './routes/restaurantReviews.js';
@@ -24,7 +24,7 @@ app.get('/', (req, res) => {
 // API Routes
 app.use('/test', testRouter);
 app.use('/api/restaurants', restaurantRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/profiles', profileRoutes);
 app.use('/api/foods', foodRoutes);
 app.use('/api/food-reviews', foodReviewRoutes);
 app.use('/api/restaurant-reviews', restaurantReviewRoutes);

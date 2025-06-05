@@ -35,6 +35,45 @@ export const getFoodReviewsByFoodId = async (req, res) => {
   }
 };
 
+export const getFoodReviewsByRestaurantId = async (req, res) => {
+  const { restaurantId } = req.params;
+  try {
+    const { rows } = await db.query(
+      `SELECT fr.*, f.name as food_name 
+       FROM food_reviews fr 
+       JOIN foods f ON fr.food_id = f.id 
+       WHERE f.restaurant_id = $1 
+       ORDER BY fr.id ASC`,
+      [restaurantId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getFoodReviewDetails = async (req, res) => {
+  try {
+    const { rows } = await db.query(
+      `SELECT 
+        r.id as restaurant_id,
+        r.name as restaurant_name,
+        COUNT(fr.id) as review_count,
+        COALESCE(AVG(fr.rating), 0) as average_rating
+       FROM restaurants r
+       LEFT JOIN foods f ON f.restaurant_id = r.id
+       LEFT JOIN food_reviews fr ON fr.food_id = f.id
+       GROUP BY r.id, r.name
+       ORDER BY review_count DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const createFoodReview = async (req, res) => {
   const { user_id, food_id, rating, text } = req.body;
 

@@ -78,7 +78,7 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="emailOrPhone" className="block text-sm font-medium text-gray-700 mb-1">
-              Email or Phone Number
+              Email
             </label>
             <input
               type="text"

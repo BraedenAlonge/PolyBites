@@ -87,4 +87,23 @@ export const createFoodReview = async (req, res) => {
     console.error('Database Query Error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
+};
+
+export const getFoodReviewStats = async (req, res) => {
+  const { foodId } = req.params;
+  try {
+    const { rows } = await db.query(
+      `SELECT 
+        COUNT(id) as review_count,
+        COALESCE(AVG(rating), 0) as average_rating
+       FROM food_reviews
+       WHERE food_id = $1
+       GROUP BY food_id`,
+      [foodId]
+    );
+    res.json(rows[0] || { review_count: 0, average_rating: 0 });
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }; 

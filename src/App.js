@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Restaurant from "./components/Restaurant";
 import RestaurantDetails from "./components/RestaurantDetails";
@@ -55,13 +55,84 @@ function HomePage({ restaurants, loading, error }) {
   const [filteredRestaurants, setFilteredRestaurants] = useState(restaurants);
   const [hasSearched, setHasSearched] = useState(false);
   const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('default');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   // Animation state for subtitle lines
   const [subtitleVisible, setSubtitleVisible] = useState([false, false, false]);
 
+  // Debounce search term
   useEffect(() => {
-    setFilteredRestaurants(restaurants);
-  }, [restaurants]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 150); // 150ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Memoize the sorting function
+  const sortRestaurants = useCallback((restaurants, sortType) => {
+    if (!restaurants.length) return [];
+    
+    let sorted = [...restaurants];
+    
+    switch (sortType) {
+      case 'rating':
+        sorted.sort((a, b) => {
+          const aRating = parseFloat(a.average_rating) || 0;
+          const bRating = parseFloat(b.average_rating) || 0;
+          return bRating - aRating;
+        });
+        break;
+      case 'reviews':
+        sorted.sort((a, b) => {
+          const aReviews = parseInt(a.review_count) || 0;
+          const bReviews = parseInt(b.review_count) || 0;
+          return bReviews - aReviews;
+        });
+        break;
+      case 'menu_items':
+        sorted.sort((a, b) => {
+          const aItems = parseInt(a.menu_item_count) || 0;
+          const bItems = parseInt(b.menu_item_count) || 0;
+          return bItems - aItems;
+        });
+        break;
+      case 'location':
+        sorted.sort((a, b) => {
+          const aLocation = (a.Location || '').toLowerCase();
+          const bLocation = (b.Location || '').toLowerCase();
+          return aLocation.localeCompare(bLocation);
+        });
+        break;
+      default:
+        sorted.sort((a, b) => a.id - b.id);
+    }
+    
+    return sorted;
+  }, []);
+
+  // Memoize filtered and sorted restaurants
+  const processedRestaurants = useMemo(() => {
+    // First filter
+    const filtered = debouncedSearchTerm.trim() === ''
+      ? restaurants
+      : restaurants.filter(restaurant =>
+          restaurant.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+        );
+    
+    // Then sort
+    return sortRestaurants(filtered, sortBy);
+  }, [debouncedSearchTerm, sortBy, restaurants, sortRestaurants]);
+
+  // Update filtered restaurants when processed results change
+  useEffect(() => {
+    setFilteredRestaurants(processedRestaurants);
+    if (debouncedSearchTerm.trim() !== '') {
+      setHasSearched(true);
+      setDisplayedSearchTerm(debouncedSearchTerm);
+    }
+  }, [processedRestaurants, debouncedSearchTerm]);
 
   useEffect(() => {
     // Sequentially show each line
@@ -74,13 +145,27 @@ function HomePage({ restaurants, loading, error }) {
   }, []);
 
   const handleSearch = (e) => {
-    e.preventDefault();
-    setDisplayedSearchTerm(searchTerm);
-    const filtered = restaurants.filter(restaurant => 
-      restaurant.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredRestaurants(filtered);
-    setHasSearched(true);
+    const newSearchTerm = e.target.value;
+    setSearchTerm(newSearchTerm);
+    if (newSearchTerm.trim() === '') {
+      setHasSearched(false);
+      setDisplayedSearchTerm('');
+    }
+  };
+
+  const handleSort = (value) => {
+    setSortBy(value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setDisplayedSearchTerm('');
+    setHasSearched(false);
+    setDebouncedSearchTerm('');
+  };
+
+  const clearSort = () => {
+    setSortBy('default');
   };
 
   return (
@@ -144,28 +229,58 @@ function HomePage({ restaurants, loading, error }) {
           </div>
         ) : (
           <>
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-[1600px] mx-auto px-6">
               <div className="flex flex-col space-y-4 mb-6">
                 <h2 className="text-2xl font-semibold text-gray-800">
                   {hasSearched && displayedSearchTerm.trim() ? `Results for "${displayedSearchTerm}"` : 'All Restaurants'}
                 </h2>
-                <form onSubmit={handleSearch} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search restaurants..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                  <button
-                    type="submit"
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    Search
-                  </button>
-                </form>
+                
+                <div className="flex gap-4 items-center">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={handleSearch}
+                      placeholder="Search restaurants..."
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        onClick={clearSearch}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label="Clear search"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                  
+                  <div className="relative w-48">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => handleSort(e.target.value)}
+                      className={`w-full cursor-pointer px-4 py-2 pr-14 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white appearance-none ${sortBy === 'default' ? 'text-gray-400' : 'text-gray-900'}`}
+                    >
+                      <option value="default" hidden>Sort by</option>
+                      <option value="rating" className="text-gray-900">Rating</option>
+                      <option value="reviews" className="text-gray-900">Reviews</option>
+                      <option value="menu_items" className="text-gray-900">Menu Items</option>
+                      <option value="location" className="text-gray-900">Location</option>
+                    </select>
+                    {sortBy !== 'default' && (
+                      <button
+                        onClick={clearSort}
+                        className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label="Clear sort"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-12">
                 {filteredRestaurants.map((restaurant) => (
                   <Restaurant
                     key={restaurant.id}
@@ -173,7 +288,7 @@ function HomePage({ restaurants, loading, error }) {
                   />
                 ))}
                 {filteredRestaurants.length === 0 && hasSearched && (
-                  <div className="col-span-2 text-center py-8 text-gray-500">
+                  <div className="col-span-full text-center py-8 text-gray-500">
                     No restaurants found matching "{displayedSearchTerm}"
                   </div>
                 )}
@@ -200,7 +315,13 @@ export default function App() {
           throw new Error('Failed to fetch restaurants');
         }
         const data = await response.json();
-        console.log('Fetched restaurants:', data);
+        console.log('Restaurant data with ratings:', data.map(r => ({
+          id: r.id,
+          name: r.name,
+          rating: r.average_rating,
+          reviews: r.review_count,
+          menu_items: r.menu_item_count
+        })));
         setRestaurants(data);
         setLoading(false);
       } catch (err) {

@@ -96,37 +96,32 @@ export default function Restaurant({ data }) {
   return (
     <Link
       to={`/restaurant/${data.id}`}
-      className="block bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+      className="block bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 w-[350px] h-[400px]"
     >
-      <div className="relative">
+      <div className="relative h-[200px]">
         <img
           src={data.image || 'https://via.placeholder.com/400x300?text=No+Image'}
           alt={data.name || 'Restaurant'}
-          className="w-full h-48 object-cover"
+          className="w-full h-full object-cover"
         />
         <div className="absolute top-0 right-0 m-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
           {formattedRating} ⭐
         </div>
       </div>
-      <div className="p-5">
-
+      <div className="p-5 h-[200px] flex flex-col">
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-xl font-bold text-gray-800 mb-2">{data.name || 'Unnamed Restaurant'}</h2> 
         </div>
         {data.Location && (
-            <p className="text-gray-400 text-sm mb-2">{data.Location}</p>
-          )}
+          <p className="text-gray-400 text-sm mb-2">{data.Location}</p>
+        )}
         {data.description && (
-          <p className="text-gray-500 text-sm mb-2">
-            {data.description.length > 76
-              ? data.description.slice(0, 73) + '...'
-              : data.description}
+          <p className="text-gray-500 text-sm mb-2 line-clamp-3">
+            {data.description}
           </p>
         )}
 
-
-        <div className="space-y-1">
-          
+        <div className="mt-auto space-y-1">
           {!data.menuItems && (
             <p className="text-gray-500 text-sm"><strong>{menuItemCount}</strong> menu items</p>
           )}

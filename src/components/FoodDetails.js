@@ -13,6 +13,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const { user } = useAuth();
+  const [reviewStats, setReviewStats] = useState({ review_count: 0, average_rating: 0 });
 
   const handleCloseSignIn = () => {
     setShowSignIn(false);
@@ -71,15 +72,25 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
       if (!foodItem?.id) return;
       
       try {
-        const response = await fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch reviews');
+        const [reviewsResponse, statsResponse] = await Promise.all([
+          fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`),
+          fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}/stats`)
+        ]);
+
+        if (!reviewsResponse.ok || !statsResponse.ok) {
+          throw new Error('Failed to fetch reviews or stats');
         }
-        const data = await response.json();
-        setReviews(data);
+
+        const [reviewsData, statsData] = await Promise.all([
+          reviewsResponse.json(),
+          statsResponse.json()
+        ]);
+
+        setReviews(reviewsData);
+        setReviewStats(statsData);
         
         // Fetch user names for each review
-        const uniqueUserIds = [...new Set(data.map(review => review.user_id))];
+        const uniqueUserIds = [...new Set(reviewsData.map(review => review.user_id))];
         uniqueUserIds.forEach(userId => {
           fetchUserName(userId);
         });
@@ -113,11 +124,20 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
         throw new Error('Failed to submit review');
       }
 
-      // Fetch updated reviews instead of reloading
-      const updatedResponse = await fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
-      if (updatedResponse.ok) {
-        const updatedReviews = await updatedResponse.json();
+      // Fetch updated reviews and stats
+      const [updatedReviewsResponse, updatedStatsResponse] = await Promise.all([
+        fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`),
+        fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}/stats`)
+      ]);
+
+      if (updatedReviewsResponse.ok && updatedStatsResponse.ok) {
+        const [updatedReviews, updatedStats] = await Promise.all([
+          updatedReviewsResponse.json(),
+          updatedStatsResponse.json()
+        ]);
+        
         setReviews(updatedReviews);
+        setReviewStats(updatedStats);
         
         // Fetch user name for the new review if needed
         const newUserId = reviewData.user_id;
@@ -188,6 +208,22 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
           ) : (
             <>
               <p className="text-gray-600 mb-4">{foodItem.description}</p>
+
+              <div className="flex items-center mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center">
+                    <div className="text-yellow-400 text-2xl">
+                      {'⭐'.repeat(Math.round(reviewStats?.average_rating || 0))}
+                    </div>
+                    <span className="ml-2 text-lg font-medium">
+                      {Number(reviewStats?.average_rating || 0).toFixed(1)}
+                    </span>
+                  </div>
+                  <div className="text-gray-500 text-sm">
+                    {reviewStats?.review_count || 0} {(reviewStats?.review_count || 0) === 1 ? 'review' : 'reviews'}
+                  </div>
+                </div>
+              </div>
 
               <div className="mt-6">
                 <h4 className="text-lg font-medium text-gray-800 mb-2">Reviews</h4>

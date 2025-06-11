@@ -2,7 +2,18 @@ import db from '../models/db.js';
 
 export const getRestaurants = async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT * FROM restaurants ORDER BY id ASC');
+    const { rows } = await db.query(`
+      SELECT 
+        r.*,
+        COALESCE(AVG(fr.rating), 0) as average_rating,
+        COUNT(DISTINCT fr.id) as review_count,
+        COUNT(DISTINCT f.id) as menu_item_count
+      FROM restaurants r
+      LEFT JOIN foods f ON f.restaurant_id = r.id
+      LEFT JOIN food_reviews fr ON fr.food_id = f.id
+      GROUP BY r.id
+      ORDER BY r.id ASC
+    `);
     res.json(rows);
   } catch (err) {
     console.error('Database Query Error:', err.message);

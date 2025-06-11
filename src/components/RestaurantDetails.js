@@ -67,9 +67,23 @@ export default function RestaurantDetails({ restaurants }) {
     };
   }, [selectedFood]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   const renderStars = (rating) => {
     const roundedRating = Math.round(rating);
     return '⭐'.repeat(roundedRating);
+  };
+
+  // Helper to get food icon path
+  const getFoodIcon = (food_type) => {
+    try {
+      if (food_type) {
+        return require(`../assets/Icons/${food_type.toLowerCase()}.png`);
+      }
+    } catch (e) {}
+    return require('../assets/Icons/food_default.png');
   };
 
   if (!restaurant) {
@@ -138,9 +152,9 @@ export default function RestaurantDetails({ restaurants }) {
                     >
                       <div className="relative h-48 mb-3 overflow-hidden rounded">
                         <img
-                          src={item.image_url || 'https://via.placeholder.com/300x200?text=No+Image'}
+                          src={getFoodIcon(item.food_type)}
                           alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          className="w-4/5 h-4/5 object-contain mx-auto my-auto group-hover:scale-105 transition-transform"
                         />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
                           <p className="text-white text-lg font-medium">${item.price}</p>
@@ -168,6 +182,11 @@ export default function RestaurantDetails({ restaurants }) {
           foodItem={selectedFood}
         />
       </div>
+      <footer className="text-center text-xs text-gray-400 py-4 bg-green-50 mt-8">
+        <a href="https://www.flaticon.com/free-icons/burger" title="burger icons" target="_blank" rel="noopener noreferrer">
+          Default icons created by Freepik - Flaticon
+        </a>
+      </footer>
     </div>
   );
 } 

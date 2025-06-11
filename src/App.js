@@ -66,9 +66,9 @@ function HomePage({ restaurants, loading, error }) {
   useEffect(() => {
     // Sequentially show each line
     const timers = [
-      setTimeout(() => setSubtitleVisible(v => [true, false, false]), 600),
-      setTimeout(() => setSubtitleVisible(v => [true, true, false]), 1300),
-      setTimeout(() => setSubtitleVisible([true, true, true]), 2000),
+      setTimeout(() => setSubtitleVisible(v => [true, false, false]), 800),
+      setTimeout(() => setSubtitleVisible(v => [true, true, false]), 1600),
+      setTimeout(() => setSubtitleVisible([true, true, true]), 2400),
     ];
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -116,7 +116,7 @@ function HomePage({ restaurants, loading, error }) {
             xmlns="http://www.w3.org/2000/svg"
             preserveAspectRatio="none"
             className="w-full h-40"
-            style={{ display: 'block', width: '100%', height: '100%' }}
+            style={{ display: 'block', width: '108%', height: '100%' }}
           >
             <path
               d="M -100,500 L -100,400 C -47,423.5 6,447 81,445 C 156,443 253,415.4 327,396 C 401,376.5 452,365.2 502,374 C 552,382.8 600,411.8 684,415 C 768,418.2 887,395.7 959,381 C 1031,366.3 1055,359.5 1111,364 C 1167,368.5 1253,384.2 1340,400 L 1440,400 L 1440,500 L -100,500 Z"

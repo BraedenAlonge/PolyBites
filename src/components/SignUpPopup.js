@@ -141,7 +141,7 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
 
           <div>
             <label htmlFor="emailOrPhone" className="block text-sm font-medium text-gray-700 mb-1">
-              Email or Phone Number
+              Email
             </label>
             <input
               type="text"

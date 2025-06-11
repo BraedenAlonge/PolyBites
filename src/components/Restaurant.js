@@ -118,8 +118,8 @@ export default function Restaurant({ data }) {
           )}
         {data.description && (
           <p className="text-gray-500 text-sm mb-2">
-            {data.description.length > 80
-              ? data.description.slice(0, 80) + '...'
+            {data.description.length > 76
+              ? data.description.slice(0, 73) + '...'
               : data.description}
           </p>
         )}
@@ -139,3 +139,4 @@ export default function Restaurant({ data }) {
     
   );
 }
+

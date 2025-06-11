@@ -126,9 +126,7 @@ export default function Restaurant({ data }) {
 
 
         <div className="space-y-1">
-          {data.Location && (
-              <p className="text-gray-600 text-sm mb-2"> {data.Location}</p>
-          )}
+          
           {!data.menuItems && (
             <p className="text-gray-500 text-sm"><strong>{menuItemCount}</strong> menu items</p>
           )}

@@ -32,7 +32,7 @@ export default function Navbar({ onSignInOpen }) {
       <div className="container mx-auto flex justify-between h-16 px-4">
         {/* Logo or App Name */}
         <div className="flex items-center h-full">
-          <h1 className="text-3xl font-extrabold animate-fade-in pl-2">Poly Bites 🍽️</h1>
+          <span className="text-3xl font-extrabold animate-fade-in pl-2 text-black">Poly Bites 🍽️</span>
         </div>
 
         {/* Right Side */}

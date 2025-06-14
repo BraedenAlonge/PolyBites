@@ -177,15 +177,19 @@ export const addLike = async (req, res) => {
       [user_id, review_id]
     );
 
-    // Increment likes count in food_reviews table
-    const { rows: [updatedReview] } = await db.query(
-      'UPDATE food_reviews SET likes = likes + 1 WHERE id = $1 RETURNING likes',
+    // Get updated like count
+    const { rows: [likeCount] } = await db.query(
+      'SELECT COUNT(*) as count FROM likes WHERE food_review_id = $1',
       [review_id]
     );
 
-    res.json({ likes: updatedReview.likes });
+    res.json({ likes: parseInt(likeCount.count) });
   } catch (err) {
     console.error('Database Query Error:', err.message);
+    // Check for unique constraint violation (user already liked this review)
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'User has already liked this review' });
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -200,13 +204,13 @@ export const removeLike = async (req, res) => {
       [user_id, review_id]
     );
 
-    // Decrement likes count in food_reviews table
-    const { rows: [updatedReview] } = await db.query(
-      'UPDATE food_reviews SET likes = GREATEST(likes - 1, 0) WHERE id = $1 RETURNING likes',
+    // Get updated like count
+    const { rows: [likeCount] } = await db.query(
+      'SELECT COUNT(*) as count FROM likes WHERE food_review_id = $1',
       [review_id]
     );
 
-    res.json({ likes: updatedReview.likes });
+    res.json({ likes: parseInt(likeCount.count) });
   } catch (err) {
     console.error('Database Query Error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
@@ -218,25 +222,21 @@ export const getReviewLikes = async (req, res) => {
   const { user_id } = req.query;
 
   try {
-    // Get like count
-    const { rows: [likeCount] } = await db.query(
-      'SELECT COUNT(*) as count FROM likes WHERE food_review_id = $1',
-      [reviewId]
+    const { rows: [result] } = await db.query(
+      `SELECT 
+        COUNT(*) as likes,
+        CASE WHEN EXISTS (
+          SELECT 1 FROM likes 
+          WHERE food_review_id = $1 AND user_id = $2
+        ) THEN true ELSE false END as userLiked
+       FROM likes
+       WHERE food_review_id = $1`,
+      [reviewId, user_id]
     );
 
-    // Check if the current user has liked this review
-    let userLiked = false;
-    if (user_id) {
-      const { rows: userLike } = await db.query(
-        'SELECT * FROM likes WHERE food_review_id = $1 AND user_id = $2',
-        [reviewId, user_id]
-      );
-      userLiked = userLike.length > 0;
-    }
-
     res.json({
-      likes: parseInt(likeCount.count),
-      userLiked
+      likes: parseInt(result.likes),
+      userLiked: result.userliked
     });
   } catch (err) {
     console.error('Database Query Error:', err.message);
@@ -249,36 +249,24 @@ export const getReviewsWithLikes = async (req, res) => {
   const { user_id } = req.query;
 
   try {
-    // Get all reviews for the food item
+    // Get all reviews for the food item with like counts and user's like status
     const { rows: reviews } = await db.query(
-      'SELECT * FROM food_reviews WHERE food_id = $1 ORDER BY id ASC',
-      [foodId]
+      `SELECT 
+        fr.*,
+        COUNT(l.food_review_id) as likes,
+        CASE WHEN EXISTS (
+          SELECT 1 FROM likes 
+          WHERE food_review_id = fr.id AND user_id = $2
+        ) THEN true ELSE false END as liked
+       FROM food_reviews fr
+       LEFT JOIN likes l ON l.food_review_id = fr.id
+       WHERE fr.food_id = $1
+       GROUP BY fr.id
+       ORDER BY fr.id ASC`,
+      [foodId, user_id]
     );
 
-    // Get like counts and user's likes for all reviews
-    const reviewsWithLikes = await Promise.all(reviews.map(async (review) => {
-      const { rows: [likeCount] } = await db.query(
-        'SELECT COUNT(*) as count FROM likes WHERE food_review_id = $1',
-        [review.id]
-      );
-
-      let userLiked = false;
-      if (user_id) {
-        const { rows: userLike } = await db.query(
-          'SELECT * FROM likes WHERE food_review_id = $1 AND user_id = $2',
-          [review.id, user_id]
-        );
-        userLiked = userLike.length > 0;
-      }
-
-      return {
-        ...review,
-        likes: parseInt(likeCount.count),
-        liked: userLiked
-      };
-    }));
-
-    res.json(reviewsWithLikes);
+    res.json(reviews);
   } catch (err) {
     console.error('Database Query Error:', err.message);
     res.status(500).json({ error: 'Internal server error' });

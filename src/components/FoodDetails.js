@@ -153,6 +153,51 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     }
   };
 
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) {
+      return;
+    }
+
+    try {
+      console.log('Attempting to delete review:', reviewId, 'for user:', user.id);
+      
+      const response = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: user.id }),
+        credentials: 'include'
+      });
+
+      const responseData = await response.json();
+      console.log('Delete response:', response.status, responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to delete review');
+      }
+
+      // Fetch updated reviews and stats
+      const [updatedReviewsResponse, updatedStatsResponse] = await Promise.all([
+        fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`),
+        fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}/stats`)
+      ]);
+
+      if (updatedReviewsResponse.ok && updatedStatsResponse.ok) {
+        const [updatedReviews, updatedStats] = await Promise.all([
+          updatedReviewsResponse.json(),
+          updatedStatsResponse.json()
+        ]);
+        
+        setReviews(updatedReviews);
+        setReviewStats(updatedStats);
+      }
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      alert(error.message || 'Failed to delete review. Please try again.');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="food-review-popup bg-white rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
@@ -239,7 +284,20 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                           <span className="font-medium text-gray-800">
                             {formatName(userNames[review.user_id]) || 'User # ' + review.user_id}
                           </span>
-                          <span className="text-green-600">{'⭐'.repeat(review.rating)}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-green-600">{'⭐'.repeat(review.rating)}</span>
+                            {user && user.id === review.user_id && (
+                              <button
+                                onClick={() => handleDeleteReview(review.id)}
+                                className="text-red-500 hover:text-red-700 transition-colors"
+                                title="Delete review"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <p className="text-gray-600">{review.text}</p>
                       </div>

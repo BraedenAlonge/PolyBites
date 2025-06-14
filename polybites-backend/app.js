@@ -13,7 +13,14 @@ dotenv.config(); // ✅ correct way to load .env in ESM
 
 const app = express(); // <-- ONLY HERE do we declare 'app'
 
-app.use(cors());
+// Configure CORS
+app.use(cors({
+  origin: 'http://localhost:3000', // Your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Basic Route

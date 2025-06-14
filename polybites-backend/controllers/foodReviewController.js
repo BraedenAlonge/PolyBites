@@ -106,4 +106,37 @@ export const getFoodReviewStats = async (req, res) => {
     console.error('Database Query Error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
   }
+};
+
+export const deleteFoodReview = async (req, res) => {
+  const { id } = req.params;
+  const { user_id } = req.body;
+
+
+  if (!user_id) {
+    console.error('No user_id provided in request body');
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    // First check if the review exists and belongs to the user
+    const { rows } = await db.query(
+      'SELECT * FROM food_reviews WHERE id = $1 AND user_id = $2',
+      [id, user_id]
+    );
+
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Food review not found or unauthorized' });
+    }
+
+    // Delete the review
+    const deleteResult = await db.query('DELETE FROM food_reviews WHERE id = $1 RETURNING *', [id]);
+    console.log('Delete result:', deleteResult.rows);
+
+    res.status(200).json({ message: 'Review deleted successfully' });
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }; 

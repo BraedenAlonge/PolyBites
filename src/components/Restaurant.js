@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import '../styles/Restaurant.css';
+import fullStar from '../assets/stars/star.png';
 
 //function to fetch foods from a restaurnat and count the number of items
 const fetchNumberOfFoods = async (restaurantId) => {
@@ -104,8 +105,9 @@ export default function Restaurant({ data }) {
           alt={data.name || 'Restaurant'}
           className="w-full h-48 object-cover"
         />
-        <div className="absolute top-0 right-0 m-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-          {formattedRating} ⭐
+        <div className="absolute top-0 right-0 m-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+          {formattedRating}
+          <img src={fullStar} alt="star" className="w-4 h-4 inline" />
         </div>
       </div>
       <div className="p-5">

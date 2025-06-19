@@ -211,7 +211,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
       }
     }
     return stars;
-
+  };
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm('Are you sure you want to delete this review?')) {
       return;

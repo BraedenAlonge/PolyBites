@@ -29,7 +29,8 @@ function Layout({ children }) {
     return (
     <div className="min-h-screen bg-green-50">
       {/* Use Navbar */}
-      <Navbar onSignInOpen={() => setIsSignInOpen(true)} />
+      <Navbar onSignInOpen={() => setIsSignInOpen(true)} 
+              onSignUpOpen={() => setIsSignUpOpen(true)}/>
 
       {/* Popups */}
       <SignInPopup
@@ -180,10 +181,10 @@ function HomePage({ restaurants, loading, error }) {
           style={{ zIndex: 0, minHeight: 600 }}
         />
         {/* Overlay for better blending */}
-        <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1 }}></div>
-        <div className="container mx-auto px-4 text-center relative z-10 flex flex-col justify-center items-center h-full">
-          <h1 className="text-8xl md:text-8xl font-extrabold mb-8 animate-fade-in">
-            Poly Bites
+        <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1, paddingTop: 0 }}></div>
+        <div className="container mx-auto px-4 text-center relative z-10 flex flex-col justify-center items-center h-full" >
+          <h1 className="text-8xl text-black md:text-8xl font-extrabold mb-8 animate-fade-in">
+            PolyBites
           </h1>
           <p className="text-4xl md:text-4xl text-green-100 mb-12 font-semibold">
             <span className={`block transition-all duration-700 ${subtitleVisible[0] ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>Your Ratings.</span>

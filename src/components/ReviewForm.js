@@ -1,11 +1,120 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-
+import fullStar from '../assets/stars/star.png';
+import halfStar from '../assets/stars/half_star.png';
+import emptyStar from '../assets/stars/empty_star.png';
 
 export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
   const [rating, setRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(null);
   const [reviewText, setReviewText] = useState('');
   const { user } = useAuth();
+
+  const handleStarClick = (value) => {
+    setRating(value);
+  };
+
+  const handleStarHover = (value) => {
+    setHoverRating(value);
+  };
+
+  const handleStarLeave = () => {
+    setHoverRating(null);
+  };
+
+  // Render stars with half-star support
+  const renderStars = () => {
+    const stars = [];
+    const displayRating = hoverRating !== null ? hoverRating : rating;
+    for (let i = 1; i <= 5; i++) {
+      if (displayRating >= i) {
+        // Full star
+        stars.push(
+          <img
+            key={i + '-full'}
+            src={fullStar}
+            alt="Full star"
+            className="w-8 h-8 inline cursor-pointer"
+            onMouseMove={e => {
+              const { left, width } = e.target.getBoundingClientRect();
+              const x = e.clientX - left;
+              if (x < width / 2) {
+                handleStarHover(i - 0.5);
+              } else {
+                handleStarHover(i);
+              }
+            }}
+            onClick={e => {
+              const { left, width } = e.target.getBoundingClientRect();
+              const x = e.clientX - left;
+              if (x < width / 2) {
+                handleStarClick(i - 0.5);
+              } else {
+                handleStarClick(i);
+              }
+            }}
+          />
+        );
+      } else if (displayRating >= i - 0.5) {
+        // Half star
+        stars.push(
+          <img
+            key={i + '-half'}
+            src={halfStar}
+            alt="Half star"
+            className="w-8 h-8 inline cursor-pointer"
+            onMouseMove={e => {
+              const { left, width } = e.target.getBoundingClientRect();
+              const x = e.clientX - left;
+              if (x < width / 2) {
+                handleStarHover(i - 0.5);
+              } else {
+                handleStarHover(i);
+              }
+            }}
+            onClick={e => {
+              const { left, width } = e.target.getBoundingClientRect();
+              const x = e.clientX - left;
+              if (x < width / 2) {
+                handleStarClick(i - 0.5);
+              } else {
+                handleStarClick(i);
+              }
+            }}
+          />
+        );
+      } else {
+        // Empty star (use emptyStar icon)
+        stars.push(
+          <img
+            key={i + '-empty'}
+            src={emptyStar}
+            alt="Empty star"
+            className="w-8 h-8 inline cursor-pointer"
+            onMouseMove={e => {
+              const { left, width } = e.target.getBoundingClientRect();
+              const x = e.clientX - left;
+              if (x < width / 2) {
+                handleStarHover(i - 0.5);
+              } else {
+                handleStarHover(i);
+              }
+            }}
+            onClick={e => {
+              const { left, width } = e.target.getBoundingClientRect();
+              const x = e.clientX - left;
+              if (x < width / 2) {
+                handleStarClick(i - 0.5);
+              } else {
+                handleStarClick(i);
+              }
+            }}
+          />
+        );
+      }
+    }
+    return stars;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19,7 +128,6 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
     setReviewText('');
   };
 
-
   return (
     <>
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg">
@@ -29,28 +137,20 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
           <label className="block text-gray-700 text-sm font-bold mb-2">
             Rating
           </label>
-          <div className="flex gap-2">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => setRating(star)}
-                className={`text-2xl p-2 hover:scale-110 transition-transform ${
-                  star <= rating ? 'text-yellow-400' : 'text-gray-300'
-                }`}
-                aria-label={`Rate ${star} stars`}
-                title={`Rate ${star} stars`}
-              >
-                ⭐
-              </button>
-            ))}
+          <div className="flex gap-2" onMouseLeave={handleStarLeave}>
+            {renderStars()}
           </div>
           <p className="text-sm text-gray-600 mt-1">
-            {rating === 1 && "Poor"}
-            {rating === 2 && "Fair"}
-            {rating === 3 && "Good"}
-            {rating === 4 && "Very Good"}
-            {rating === 5 && "Excellent"}
+            {rating === 0.5 && "AWFUL"}
+            {rating === 1 && "POOR"}
+            {rating === 1.5 && "UNSATISFACTORY"}
+            {rating === 2 && "BELOW AVERAGE"}
+            {rating === 2.5 && "OKAY"}
+            {rating === 3 && "ABOVE AVERAGE"}
+            {rating === 3.5 && "DECENT"}
+            {rating === 4 && "GOOD"}
+            {rating === 4.5 && "VERY GOOD"}
+            {rating === 5 && "EXCELLENT"}
           </p>
         </div>
 
@@ -84,7 +184,6 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
           </button>
         </div>
       </form>
-
     </>
   );
 } 

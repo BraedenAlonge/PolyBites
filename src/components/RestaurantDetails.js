@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FoodReview from './FoodDetails';
+import fullStar from '../assets/stars/star.png';
+import halfStar from '../assets/stars/half_star.png';
+import emptyStar from '../assets/stars/empty_star.png';
 
 export default function RestaurantDetails({ restaurants }) {
   const { id } = useParams();
@@ -71,9 +74,22 @@ export default function RestaurantDetails({ restaurants }) {
     window.scrollTo(0, 0);
   }, [id]);
 
+  // Render stars with half-star support for average rating
   const renderStars = (rating) => {
-    const roundedRating = Math.round(rating);
-    return '⭐'.repeat(roundedRating);
+    const stars = [];
+    let remaining = Math.round(rating * 2) / 2; // round to nearest 0.5
+    for (let i = 1; i <= 5; i++) {
+      if (remaining >= 1) {
+        stars.push(<img key={i + '-full'} src={fullStar} alt="Full star" className="w-6 h-6 inline" />);
+        remaining -= 1;
+      } else if (remaining === 0.5) {
+        stars.push(<img key={i + '-half'} src={halfStar} alt="Half star" className="w-6 h-6 inline" />);
+        remaining -= 0.5;
+      } else {
+        stars.push(<img key={i + '-empty'} src={emptyStar} alt="Empty star" className="w-6 h-6 inline" />);
+      }
+    }
+    return stars;
   };
 
   // Helper to get food icon path
@@ -129,7 +145,7 @@ export default function RestaurantDetails({ restaurants }) {
             </div>
             <div className="text-green-600 font-medium text-lg mb-6 flex items-center gap-2">
               <span>Rating: {Number(averageRating).toFixed(1)}</span>
-              <span className="text-2xl">{renderStars(averageRating)}</span>
+              <span className="text-2xl flex items-center">{renderStars(averageRating)}</span>
               {restaurant.Location && (
                 <span className="text-gray-500 text-2xl ml-4">{restaurant.Location}</span>
 

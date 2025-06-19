@@ -16,6 +16,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
   const { user } = useAuth();
+  const [reviewStats, setReviewStats] = useState({ review_count: 0, average_rating: 0 });
 
   const handleCloseSignIn = () => {
     setShowSignIn(false);
@@ -74,15 +75,54 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
       if (!foodItem?.id) return;
       
       try {
-        const response = await fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch reviews');
+        
+        const [reviewsResponse, statsResponse] = await Promise.all([
+          fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`),
+          fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}/stats`)
+        ]);
+
+        if (!reviewsResponse.ok) {
+          const errorData = await reviewsResponse.json();
+          throw new Error(errorData.error || 'Failed to fetch reviews');
         }
-        const data = await response.json();
-        setReviews(data);
+        if (!statsResponse.ok) {
+          const errorData = await statsResponse.json();
+          throw new Error(errorData.error || 'Failed to fetch stats');
+        }
+
+        const [reviewsData, statsData] = await Promise.all([
+          reviewsResponse.json(),
+          statsResponse.json()
+        ]);
+
+        // Get like status for each review if user is logged in
+        if (user) {
+          const reviewsWithLikes = await Promise.all(
+            reviewsData.map(async (review) => {
+              try {
+                const likeResponse = await fetch(
+                  `http://localhost:5000/api/food-reviews/${review.id}/like/${user.id}`
+                );
+                if (likeResponse.ok) {
+                  const { exists } = await likeResponse.json();
+                  return { ...review, liked: exists };
+                }
+                return review;
+              } catch (err) {
+                console.error('Error fetching like status:', err);
+                return review;
+              }
+            })
+          );
+          setReviews(reviewsWithLikes);
+        } else {
+          setReviews(reviewsData);
+        }
+
+        setReviewStats(statsData);
         
         // Fetch user names for each review
-        const uniqueUserIds = [...new Set(data.map(review => review.user_id))];
+        const uniqueUserIds = [...new Set(reviewsData.map(review => review.user_id))];
         uniqueUserIds.forEach(userId => {
           fetchUserName(userId);
         });
@@ -98,7 +138,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     if (isOpen) {
       fetchReviews();
     }
-  }, [isOpen, foodItem?.id]);
+  }, [isOpen, foodItem?.id, user]);
 
   if (!isOpen || !foodItem) return null;
 
@@ -116,11 +156,20 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
         throw new Error('Failed to submit review');
       }
 
-      // Fetch updated reviews instead of reloading
-      const updatedResponse = await fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
-      if (updatedResponse.ok) {
-        const updatedReviews = await updatedResponse.json();
+      // Fetch updated reviews and stats
+      const [updatedReviewsResponse, updatedStatsResponse] = await Promise.all([
+        fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`),
+        fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}/stats`)
+      ]);
+
+      if (updatedReviewsResponse.ok && updatedStatsResponse.ok) {
+        const [updatedReviews, updatedStats] = await Promise.all([
+          updatedReviewsResponse.json(),
+          updatedStatsResponse.json()
+        ]);
+        
         setReviews(updatedReviews);
+        setReviewStats(updatedStats);
         
         // Fetch user name for the new review if needed
         const newUserId = reviewData.user_id;
@@ -136,7 +185,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     }
   };
 
-  // Helper to get food icon path (same as RestaurantDetails)
+    // Helper to get food icon path (same as RestaurantDetails)
   const getFoodIcon = (food_type) => {
     try {
       if (food_type) {
@@ -162,6 +211,118 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
       }
     }
     return stars;
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) {
+      return;
+    }
+
+    try {
+      console.log('Attempting to delete review:', reviewId, 'for user:', user.id);
+      
+      const response = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: user.id }),
+        credentials: 'include'
+      });
+
+      const responseData = await response.json();
+      console.log('Delete response:', response.status, responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to delete review');
+      }
+
+      // Fetch updated reviews and stats
+      const [updatedReviewsResponse, updatedStatsResponse] = await Promise.all([
+        fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`),
+        fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}/stats`)
+      ]);
+
+      if (updatedReviewsResponse.ok && updatedStatsResponse.ok) {
+        const [updatedReviews, updatedStats] = await Promise.all([
+          updatedReviewsResponse.json(),
+          updatedStatsResponse.json()
+        ]);
+        
+        setReviews(updatedReviews);
+        setReviewStats(updatedStats);
+      }
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      alert(error.message || 'Failed to delete review. Please try again.');
+    }
+  };
+
+  const handleLikeReview = async (reviewId) => {
+    if (!user) {
+      setShowSignIn(true);
+      return;
+    }
+
+    try {
+      console.log('Checking like status for review:', reviewId, 'user:', user.id);
+      
+      // First check if the user has already liked this review
+      const checkResponse = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}/like/${user.id}`);
+      if (!checkResponse.ok) {
+        throw new Error('Failed to check like status');
+      }
+      const { exists } = await checkResponse.json();
+
+      let response;
+      if (exists) {
+        // Remove like
+        response = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}/like`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            review_id: reviewId,
+            user_id: user.id 
+          }),
+          credentials: 'include'
+        });
+      } else {
+        // Add like
+        response = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}/like`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            review_id: reviewId,
+            user_id: user.id 
+          }),
+          credentials: 'include'
+        });
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update like');
+      }
+
+      const data = await response.json();
+      console.log('Like update response:', data);
+      
+      // Update the review's likes count and liked state
+      setReviews(prevReviews => 
+        prevReviews.map(review => 
+          review.id === reviewId 
+            ? { ...review, likes: data.likes, liked: !exists }
+            : review
+        )
+      );
+    } catch (error) {
+      console.error('Error updating like:', error);
+      alert(error.message || 'Failed to update like. Please try again.');
+    }
+
   };
 
   return (
@@ -232,6 +393,22 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
             <>
               <p className="text-gray-600 mb-4">{foodItem.description}</p>
 
+              <div className="flex items-center mb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center">
+                    <div className="text-yellow-400 text-2xl">
+                      {'⭐'.repeat(Math.round(reviewStats?.average_rating || 0))}
+                    </div>
+                    <span className="ml-2 text-lg font-medium">
+                      {Number(reviewStats?.average_rating || 0).toFixed(1)}
+                    </span>
+                  </div>
+                  <div className="text-gray-500 text-sm">
+                    {reviewStats?.review_count || 0} {(reviewStats?.review_count || 0) === 1 ? 'review' : 'reviews'}
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-6">
                 <h4 className="text-lg font-medium text-gray-800 mb-2">Reviews</h4>
                 {loading ? (
@@ -246,9 +423,45 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                           <span className="font-medium text-gray-800">
                             {formatName(userNames[review.user_id]) || 'User # ' + review.user_id}
                           </span>
-                          <span className="text-green-600 flex items-center">{renderStars(review.rating)}</span>
+
+                          <div className="flex items-center gap-2">
+                           <span className="text-green-600 flex items-center">{renderStars(review.rating)}</span>
+                            {user && user.id === review.user_id && (
+                              <button
+                                onClick={() => handleDeleteReview(review.id)}
+                                className="text-red-500 hover:text-red-700 transition-colors"
+                                title="Delete review"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <p className="text-gray-600">{review.text}</p>
+                        <div className="flex justify-end mt-2">
+                          <button
+                            onClick={() => handleLikeReview(review.id)}
+                            className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors"
+                            title={review.liked ? "Unlike review" : "Like review"}
+                          >
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className="h-5 w-5" 
+                              viewBox="0 0 20 20" 
+                              fill={review.liked ? "currentColor" : "none"}
+                              stroke="currentColor"
+                            >
+                              <path 
+                                fillRule="evenodd" 
+                                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
+                                clipRule="evenodd" 
+                              />
+                            </svg>
+                            <span className="text-sm">{review.likes || 0}</span>
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

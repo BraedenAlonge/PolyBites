@@ -3,6 +3,9 @@ import ReviewForm from './ReviewForm';
 import { useAuth } from '../context/AuthContext';
 import SignInPopup from './SignInPopup';
 import SignUpPopup from './SignUpPopup';
+import fullStar from '../assets/stars/star.png';
+import halfStar from '../assets/stars/half_star.png';
+import emptyStar from '../assets/stars/empty_star.png';
 
 export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [isWritingReview, setIsWritingReview] = useState(false);
@@ -133,15 +136,55 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     }
   };
 
+  // Helper to get food icon path (same as RestaurantDetails)
+  const getFoodIcon = (food_type) => {
+    try {
+      if (food_type) {
+        return require(`../assets/Icons/${food_type.toLowerCase()}.png`);
+      }
+    } catch (e) {}
+    return require('../assets/Icons/food_default.png');
+  };
+
+  // Render stars with half-star support for review ratings
+  const renderStars = (rating) => {
+    const stars = [];
+    let remaining = Math.round(rating * 2) / 2;
+    for (let i = 1; i <= 5; i++) {
+      if (remaining >= 1) {
+        stars.push(<img key={i + '-full'} src={fullStar} alt="Full star" className="w-5 h-5 inline" />);
+        remaining -= 1;
+      } else if (remaining === 0.5) {
+        stars.push(<img key={i + '-half'} src={halfStar} alt="Half star" className="w-5 h-5 inline" />);
+        remaining -= 0.5;
+      } else {
+        stars.push(<img key={i + '-empty'} src={emptyStar} alt="Empty star" className="w-5 h-5 inline" />);
+      }
+    }
+    return stars;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="food-review-popup bg-white rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-        <div className="relative">
-          <img
-            src={foodItem.image_url || 'https://via.placeholder.com/600x400?text=No+Image'}
-            alt={foodItem.name}
-            className="w-full h-48 md:h-64 object-cover"
-          />
+        <div className="relative flex flex-col items-center justify-center">
+          <div className="flex flex-row justify-center items-center gap-4 my-4">
+            <img
+              src={getFoodIcon(foodItem.food_type)}
+              alt={foodItem.name}
+              className="w-24 h-24 object-contain"
+            />
+            <img
+              src={getFoodIcon(foodItem.food_type)}
+              alt={foodItem.name}
+              className="w-24 h-24 object-contain"
+            />
+            <img
+              src={getFoodIcon(foodItem.food_type)}
+              alt={foodItem.name}
+              className="w-24 h-24 object-contain"
+            />
+          </div>
           <button
             onClick={onClose}
             className="absolute top-4 right-4 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors"
@@ -203,7 +246,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                           <span className="font-medium text-gray-800">
                             {formatName(userNames[review.user_id]) || 'User # ' + review.user_id}
                           </span>
-                          <span className="text-green-600">{'⭐'.repeat(review.rating)}</span>
+                          <span className="text-green-600 flex items-center">{renderStars(review.rating)}</span>
                         </div>
                         <p className="text-gray-600">{review.text}</p>
                       </div>

@@ -172,7 +172,7 @@ function HomePage({ restaurants, loading, error }) {
   return (
     <main>
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white py-16 mb-12 relative overflow-hidden" style={{ height: '70vh', minHeight: 500 }}>
+      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white pt-5 pb-0 mb-12 relative overflow-hidden" style={{ height: '60vh', minHeight: 400 }}>
         {/* Opaque food image background */}
         <img
           src={require('./assets/images/food-back.jpg')}
@@ -194,7 +194,7 @@ function HomePage({ restaurants, loading, error }) {
           <div className="w-24 h-1 bg-white mx-auto rounded-full opacity-50"></div>
         </div>
         {/* Wave SVG divider */}
-        <div className="absolute left-0 right-0 bottom-0 w-full overflow-hidden leading-none pointer-events-none" style={{zIndex: 2, lineHeight: 0}}>
+        {/* <div className="absolute left-0 right-0 bottom-0 w-full overflow-hidden leading-none pointer-events-none" style={{zIndex: 2, lineHeight: 0}}>
           <svg
             width="100%"
             height="100%"
@@ -212,11 +212,11 @@ function HomePage({ restaurants, loading, error }) {
               fillOpacity="1"
             />
           </svg>
-        </div>
+        </div> */}
       </div>
 
       {/* Restaurants Section */}
-      <div className="container mx-auto px-4 -mt-12">
+      <div className="container mx-auto px-4 -mt-12 pt-5 pb-4  rounded-t-lg" >
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-600 mb-4"></div>

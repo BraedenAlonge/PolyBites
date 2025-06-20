@@ -31,7 +31,7 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
     setError('');
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: formData.emailOrPhone,
         password: formData.password
       });
@@ -39,7 +39,6 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
       if (error) {
         setError(error.message);
       } else {
-        alert('Sign in successful!');
         onClose();  // Close popup
       }
     } catch (err) {

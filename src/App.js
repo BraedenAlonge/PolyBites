@@ -10,6 +10,7 @@ import { AuthProvider } from "./context/AuthContext";
 
 import Navbar from "./components/Navbar";
 import "./styles/App.css"
+import AboutPage from './components/AboutPage';
 
 
 function Layout({ children }) {
@@ -354,6 +355,10 @@ export default function App() {
               <Route
                 path="/restaurant/:id"
                 element={<RestaurantDetails restaurants={restaurants || []} />}
+              />
+              <Route
+                path="/about"
+                element={<AboutPage />}
               />
             </Routes>
           </Layout>

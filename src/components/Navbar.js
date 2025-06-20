@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onSignInOpen, onSignUpOpen }) {
@@ -32,24 +33,29 @@ export default function Navbar({ onSignInOpen, onSignUpOpen }) {
       <div className="container mx-auto flex justify-between h-16 px-4">
         {/* Logo or App Name */}
         <div className="flex items-center h-full">
-          <span className="text-3xl font-extrabold animate-fade-in pl-2 text-black">PolyBites 🍽️</span>
+          <Link to="/" className="text-3xl font-extrabold animate-fade-in pl-2 text-black hover:text-green-100 transition-colors">
+            PolyBites 🍽️
+          </Link>
         </div>
 
         {/* Right Side */}
         {user ? (
           <div className="flex items-center space-x-4 pr-2">
-            <span className="text-white">Welcome, {userName.split(' ')[0] || 'Guest'}</span>
             <button
               onClick={logout}
-              className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
+              className="bg-black text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-white hover:text-black transition-colors"
             >
-              Logout
+              Log out
             </button>
+            <Link
+              to="/about"
+              className="bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-white/30 transition-colors"
+            >
+              About
+            </Link>
           </div>
         ) : (
           <div className="flex items-center space-x-4 pr-2">
-            <span className="text-white">Welcome, Guest</span>
-
             {user ?
               (
               <div>
@@ -73,9 +79,17 @@ export default function Navbar({ onSignInOpen, onSignUpOpen }) {
                 <button
                   onClick={onSignUpOpen}
                   className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
+                  style={{marginRight: 10}}
                 >
                   Sign Up
                 </button>
+
+                <Link
+                  to="/about"
+                  className="bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-white/30 transition-colors"
+                >
+                  About
+                </Link>
              </div>
             )}
           </div>

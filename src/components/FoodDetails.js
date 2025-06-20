@@ -212,6 +212,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     }
     return stars;
   };
+
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm('Are you sure you want to delete this review?')) {
       return;
@@ -325,6 +326,16 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
 
   };
 
+
+  // Returns a color from red (0) to green (5) for the rating
+  const getRatingColor = (rating) => {
+    // Clamp rating between 0 and 5
+    const clamped = Math.max(0, Math.min(5, rating));
+    // Interpolate hue from 0 (red) to 120 (green)
+    const hue = (clamped / 5) * 120;
+    return `hsl(${hue}, 70%, 40%)`;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="food-review-popup bg-white rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
@@ -392,25 +403,19 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
           ) : (
             <>
               <p className="text-gray-600 mb-4">{foodItem.description}</p>
-
-              <div className="flex items-center mb-4">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center">
-                    <div className="text-yellow-400 text-2xl">
-                      {'⭐'.repeat(Math.round(reviewStats?.average_rating || 0))}
-                    </div>
-                    <span className="ml-2 text-lg font-medium">
-                      {Number(reviewStats?.average_rating || 0).toFixed(1)}
-                    </span>
-                  </div>
-                  <div className="text-gray-500 text-sm">
-                    {reviewStats?.review_count || 0} {(reviewStats?.review_count || 0) === 1 ? 'review' : 'reviews'}
-                  </div>
-                </div>
-              </div>
-
               <div className="mt-6">
                 <h4 className="text-lg font-medium text-gray-800 mb-2">Reviews</h4>
+                {/* Average rating display */}
+                <div className="flex items-center gap-2 mb-4">
+                  <span
+                    className="font-bold text-lg"
+                    style={{ color: getRatingColor(reviewStats.average_rating) }}
+                  >
+                    {reviewStats.average_rating ? Number(reviewStats.average_rating).toFixed(1) : '0.0'}
+                  </span>
+                  <span className="flex items-center">{renderStars(reviewStats.average_rating)}</span>
+                  <span className="text-gray-500 text-sm">({reviewStats.review_count || 0} reviews)</span>
+                </div>
                 {loading ? (
                   <div className="text-center py-4">Loading reviews...</div>
                 ) : error ? (

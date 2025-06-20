@@ -92,6 +92,15 @@ export default function RestaurantDetails({ restaurants }) {
     return stars;
   };
 
+  // Returns a color from red (0) to green (5) for the rating
+  const getRatingColor = (rating) => {
+    // Clamp rating between 0 and 5
+    const clamped = Math.max(0, Math.min(5, rating));
+    // Interpolate hue from 0 (red) to 120 (green)
+    const hue = (clamped / 5) * 120;
+    return `hsl(${hue}, 70%, 40%)`;
+  };
+
   // Helper to get food icon path
   const getFoodIcon = (food_type) => {
     try {
@@ -139,17 +148,24 @@ export default function RestaurantDetails({ restaurants }) {
           />
           <div className="p-6">
             <div className="flex flex-col gap-4">
-              <h2 className="text-3xl font-semibold text-gray-800">
-                {restaurant.name}
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-3xl font-semibold text-gray-800">
+                  {restaurant.name}
+                </h2>
+                {restaurant.Location && (
+                  <span className="text-gray-500 text-xl md:text-3xl ml-2" style={{ whiteSpace: 'nowrap' }}>
+                    {restaurant.Location}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="text-green-600 font-medium text-lg mb-6 flex items-center gap-2">
-              <span>Rating: {Number(averageRating).toFixed(1)}</span>
-              <span className="text-2xl flex items-center">{renderStars(averageRating)}</span>
-              {restaurant.Location && (
-                <span className="text-gray-500 text-2xl ml-4">{restaurant.Location}</span>
-
-              )}
+            <div className="flex items-center gap-2 mb-10 text-lg font-medium" style={{ minHeight: '3.5rem' }}>
+              <span className="flex items-center gap-2">
+                <span style={{ color: getRatingColor(averageRating), fontSize: '2.5rem', fontWeight: 'bold', lineHeight: 1 }}>
+                  {Number(averageRating).toFixed(1)}
+                </span>
+                <span className="flex items-center" style={{ fontSize: '2.2rem', height: '2.5rem' }}>{renderStars(averageRating)}</span>
+              </span>
             </div>
 
             {loading ? (

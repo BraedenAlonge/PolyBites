@@ -29,6 +29,9 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
 
   const createProfile = async (userId) => {
     try {
+      // Add a small delay to ensure the auth user is properly created
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       const response = await fetch('http://localhost:5000/api/profiles', {
         method: 'POST',
         headers: {
@@ -41,7 +44,8 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create profile');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create profile');
       }
 
       return await response.json();
@@ -85,7 +89,15 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
         onClose();
       } catch (profileError) {
         console.error('Profile creation error:', profileError);
-        alert('Account created but profile setup failed. Please contact support.');
+        
+        // Provide more specific error messages
+        if (profileError.message.includes('Invalid auth_id')) {
+          alert('Account created but there was a delay in setting up your profile. Please try signing in again in a few moments.');
+        } else if (profileError.message.includes('Profile already exists')) {
+          alert('A profile already exists for this account. Please try signing in instead.');
+        } else {
+          alert('Account created but profile setup failed. Please contact support.');
+        }
         
         // You might want to delete the auth user here if profile creation fails
         // This would require admin privileges in Supabase

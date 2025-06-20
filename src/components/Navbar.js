@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-export default function Navbar({ onSignInOpen }) {
+export default function Navbar({ onSignInOpen, onSignUpOpen }) {
   const { user, logout } = useAuth();
   const [userName, setUserName] = useState('');
 
@@ -32,7 +32,7 @@ export default function Navbar({ onSignInOpen }) {
       <div className="container mx-auto flex justify-between h-16 px-4">
         {/* Logo or App Name */}
         <div className="flex items-center h-full">
-          <span className="text-3xl font-extrabold animate-fade-in pl-2 text-black">Poly Bites 🍽️</span>
+          <span className="text-3xl font-extrabold animate-fade-in pl-2 text-black">PolyBites 🍽️</span>
         </div>
 
         {/* Right Side */}
@@ -49,12 +49,35 @@ export default function Navbar({ onSignInOpen }) {
         ) : (
           <div className="flex items-center space-x-4 pr-2">
             <span className="text-white">Welcome, Guest</span>
-            <button
-              onClick={onSignInOpen}
-              className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
-            >
-              Sign In
-            </button>
+
+            {user ?
+              (
+              <div>
+                <button
+                  onClick={logout}
+                  className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
+                >
+                  Sign Out
+                </button>
+                </div>
+                ) : (
+              <div>
+                <button
+                  onClick={onSignInOpen}
+                  className="bg-black text-white-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-black-50 transition-colors"
+                  style={{marginRight: 10}}
+                >
+                  Sign In
+                </button>
+
+                <button
+                  onClick={onSignUpOpen}
+                  className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
+                >
+                  Sign Up
+                </button>
+             </div>
+            )}
           </div>
         )}
       </div>

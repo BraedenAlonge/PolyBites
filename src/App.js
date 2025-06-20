@@ -29,7 +29,8 @@ function Layout({ children }) {
     return (
     <div className="min-h-screen bg-green-50">
       {/* Use Navbar */}
-      <Navbar onSignInOpen={() => setIsSignInOpen(true)} />
+      <Navbar onSignInOpen={() => setIsSignInOpen(true)} 
+              onSignUpOpen={() => setIsSignUpOpen(true)}/>
 
       {/* Popups */}
       <SignInPopup
@@ -171,7 +172,7 @@ function HomePage({ restaurants, loading, error }) {
   return (
     <main>
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white py-16 mb-12 relative overflow-hidden" style={{ height: '70vh', minHeight: 500 }}>
+      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white pt-5 pb-0 mb-12 relative overflow-hidden" style={{ height: '60vh', minHeight: 400 }}>
         {/* Opaque food image background */}
         <img
           src={require('./assets/images/food-back.jpg')}
@@ -180,10 +181,10 @@ function HomePage({ restaurants, loading, error }) {
           style={{ zIndex: 0, minHeight: 600 }}
         />
         {/* Overlay for better blending */}
-        <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1 }}></div>
-        <div className="container mx-auto px-4 text-center relative z-10 flex flex-col justify-center items-center h-full">
-          <h1 className="text-8xl md:text-8xl font-extrabold mb-8 animate-fade-in">
-            Poly Bites
+        <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1, paddingTop: 0 }}></div>
+        <div className="container mx-auto px-4 text-center relative z-10 flex flex-col justify-center items-center h-full" >
+          <h1 className="text-8xl text-black md:text-8xl font-extrabold mb-8 animate-fade-in">
+            PolyBites
           </h1>
           <p className="text-4xl md:text-4xl text-green-100 mb-12 font-semibold">
             <span className={`block transition-all duration-700 ${subtitleVisible[0] ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>Your Ratings.</span>
@@ -193,7 +194,7 @@ function HomePage({ restaurants, loading, error }) {
           <div className="w-24 h-1 bg-white mx-auto rounded-full opacity-50"></div>
         </div>
         {/* Wave SVG divider */}
-        <div className="absolute left-0 right-0 bottom-0 w-full overflow-hidden leading-none pointer-events-none" style={{zIndex: 2, lineHeight: 0}}>
+        {/* <div className="absolute left-0 right-0 bottom-0 w-full overflow-hidden leading-none pointer-events-none" style={{zIndex: 2, lineHeight: 0}}>
           <svg
             width="100%"
             height="100%"
@@ -211,11 +212,11 @@ function HomePage({ restaurants, loading, error }) {
               fillOpacity="1"
             />
           </svg>
-        </div>
+        </div> */}
       </div>
 
       {/* Restaurants Section */}
-      <div className="container mx-auto px-4 -mt-12">
+      <div className="container mx-auto px-4 -mt-12 pt-5 pb-4  rounded-t-lg" >
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-600 mb-4"></div>

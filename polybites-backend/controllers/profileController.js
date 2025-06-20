@@ -52,6 +52,19 @@ export const createProfile = async (req, res) => {
   }
 
   try {
+    // First, verify that the auth_id exists in the auth.users table
+    const { rows: authCheck } = await db.query(
+      'SELECT id FROM auth.users WHERE id = $1',
+      [auth_id]
+    );
+    
+    if (authCheck.length === 0) {
+      return res.status(400).json({ 
+        error: 'Invalid auth_id: User does not exist in auth system',
+        auth_id: auth_id 
+      });
+    }
+
     const { rows } = await db.query(
       'INSERT INTO profiles (name, auth_id) VALUES ($1, $2) RETURNING id, name, created_at',
       [name, auth_id]
@@ -62,6 +75,13 @@ export const createProfile = async (req, res) => {
     // Check for unique constraint violation on auth_id
     if (err.code === '23505' && err.constraint === 'profiles_auth_id_key') {
       return res.status(409).json({ error: 'Profile already exists for this user' });
+    }
+    // Check for foreign key constraint violation
+    if (err.code === '23503' && err.constraint === 'profiles_auth_id_fkey') {
+      return res.status(400).json({ 
+        error: 'Invalid auth_id: User does not exist in auth system',
+        auth_id: auth_id 
+      });
     }
     res.status(500).json({ error: 'Internal server error' });
   }

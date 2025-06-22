@@ -45,7 +45,7 @@ export default function Navbar({ onSignInOpen, onSignUpOpen }) {
               onClick={logout}
               className="bg-black text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-white hover:text-black transition-colors"
             >
-              Log out
+              Logout
             </button>
             <Link
               to="/about"

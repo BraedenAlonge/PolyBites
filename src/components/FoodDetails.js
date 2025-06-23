@@ -59,7 +59,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
       const userData = await response.json();
       setUserNames(prev => ({
         ...prev,
-        [userId]: userData.name
+        [userId]: userData.anonymous_posting ? "Anonymous Diner" : userData.name
       }));
     } catch (err) {
       console.error('Error fetching profile:', err);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import userIcon from '../assets/Misc/User.png';
 
 export default function Navbar({ onSignInOpen, onSignUpOpen }) {
   const { user, logout } = useAuth();
@@ -41,18 +42,30 @@ export default function Navbar({ onSignInOpen, onSignUpOpen }) {
         {/* Right Side */}
         {user ? (
           <div className="flex items-center space-x-4 pr-2">
+            <Link
+              to="/about"
+              className=" text-white px-4 py-1.5 text-sm font-medium hover:bg-white/30 hover:rounded-full"
+            >
+              About
+            </Link>
+            {/* <Link
+              to="/contact-us"
+              className=" text-white px-4 py-1.5 text-sm font-medium hover:bg-white/30 hover:rounded-full"
+            >
+              Contact Us
+            </Link> */}
+            <Link
+              to="/profile"
+              className=" text-white px-2 py-0.5 text-sm font-medium hover:invert  flex items-center gap-2"
+            >
+              <img src={userIcon} alt="Profile" className="w-5 h-5" />
+            </Link>
             <button
               onClick={logout}
               className="bg-black text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-white hover:text-black transition-colors"
             >
               Logout
             </button>
-            <Link
-              to="/about"
-              className="bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-white/30 transition-colors"
-            >
-              About
-            </Link>
           </div>
         ) : (
           <div className="flex items-center space-x-4 pr-2">

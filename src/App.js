@@ -11,7 +11,7 @@ import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/Navbar";
 import "./styles/App.css"
 import AboutPage from './components/AboutPage';
-
+import ProfilePage from './components/ProfilePage';
 
 function Layout({ children }) {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
@@ -173,7 +173,7 @@ function HomePage({ restaurants, loading, error }) {
   return (
     <main>
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white pt-5 pb-0 mb-12 relative overflow-hidden" style={{ height: '60vh', minHeight: 400 }}>
+      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white pt-5 pb-0 mb-12 relative overflow-hidden" style={{ height: '75vh', minHeight: 400 }}>
         {/* Opaque food image background */}
         <img
           src={require('./assets/images/food-back.jpg')}
@@ -359,6 +359,10 @@ export default function App() {
               <Route
                 path="/about"
                 element={<AboutPage />}
+              />
+              <Route
+                path="/profile"
+                element={<ProfilePage />}
               />
             </Routes>
           </Layout>

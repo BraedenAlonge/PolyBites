@@ -42,6 +42,7 @@ export default function RestaurantDetails({ restaurants }) {
         const data = await response.json();
         const restaurantRating = data.find(r => r.restaurant_id === parseInt(id));
         setAverageRating(restaurantRating?.average_rating || 0);
+        console.log('Fetched reviews:', data);
       } catch (err) {
         console.error('Error fetching restaurant rating:', err);
         setAverageRating(0);

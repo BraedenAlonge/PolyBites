@@ -2,7 +2,7 @@ import db from '../models/db.js';
 
 export const getProfiles = async (req, res) => {
   try {
-    const { rows } = await db.query('SELECT id, name, created_at, anonymous_posting FROM profiles');
+    const { rows } = await db.query('SELECT id, name, created_at FROM profiles');
     res.json(rows);
   } catch (err) {
     console.error('Database Query Error:', err.message);
@@ -14,7 +14,7 @@ export const getProfileById = async (req, res) => {
   const { id } = req.params;
   try {
     const { rows } = await db.query(
-      'SELECT id, name, created_at, anonymous_posting FROM profiles WHERE id = $1',
+      'SELECT id, name, created_at FROM profiles WHERE id = $1',
       [id]
     );
     if (rows.length === 0) {
@@ -31,7 +31,7 @@ export const getProfileByAuthId = async (req, res) => {
   const { auth_id } = req.params;
   try {
     const { rows } = await db.query(
-      'SELECT id, name, created_at, anonymous_posting FROM profiles WHERE auth_id = $1',
+      'SELECT id, name, created_at FROM profiles WHERE auth_id = $1',
       [auth_id]
     );
     if (rows.length === 0) {
@@ -45,7 +45,7 @@ export const getProfileByAuthId = async (req, res) => {
 };
 
 export const createProfile = async (req, res) => {
-  const { name, auth_id, anonymous_posting = false } = req.body;
+  const { name, auth_id } = req.body;
   
   if (!name || !auth_id) {
     return res.status(400).json({ error: 'Name and auth_id are required' });
@@ -66,8 +66,8 @@ export const createProfile = async (req, res) => {
     }
 
     const { rows } = await db.query(
-      'INSERT INTO profiles (name, auth_id, anonymous_posting) VALUES ($1, $2, $3) RETURNING id, name, created_at, anonymous_posting',
-      [name, auth_id, anonymous_posting]
+      'INSERT INTO profiles (name, auth_id) VALUES ($1, $2) RETURNING id, name, created_at',
+      [name, auth_id]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -89,20 +89,20 @@ export const createProfile = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   const { auth_id } = req.params;
-  const { name, anonymous_posting } = req.body;
+  const { name } = req.body;
   
-  console.log('updateProfile called with:', { auth_id, name, anonymous_posting });
+  console.log('updateProfile called with:', { auth_id, name });
   
   if (!name) {
     return res.status(400).json({ error: 'Name is required' });
   }
 
   try {
-    console.log('Executing SQL update with:', [name, anonymous_posting, auth_id]);
+    console.log('Executing SQL update with:', [name, auth_id]);
     
     const { rows } = await db.query(
-      'UPDATE profiles SET name = $1, anonymous_posting = $2 WHERE auth_id = $3 RETURNING id, name, created_at, anonymous_posting',
-      [name, anonymous_posting, auth_id]
+      'UPDATE profiles SET name = $1 WHERE auth_id = $2 RETURNING id, name, created_at',
+      [name, auth_id]
     );
     
     console.log('SQL update result:', rows);

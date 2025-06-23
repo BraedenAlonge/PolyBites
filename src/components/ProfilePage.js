@@ -11,8 +11,7 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
-    anonymous_posting: false
+    email: ''
   });
 
   useEffect(() => {
@@ -35,8 +34,7 @@ export default function ProfilePage() {
         setProfile(profileData);
         setFormData({
           name: profileData.name || '',
-          email: user.email || '',
-          anonymous_posting: profileData.anonymous_posting || false
+          email: user.email || ''
         });
         setLoading(false);
       } catch (err) {
@@ -53,8 +51,7 @@ export default function ProfilePage() {
     e.preventDefault();
     try {
       const requestBody = {
-        name: formData.name,
-        anonymous_posting: formData.anonymous_posting
+        name: formData.name
       };
       
       console.log('Sending profile update request:', requestBody);
@@ -172,23 +169,6 @@ export default function ProfilePage() {
                   <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
                 </div>
 
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="anonymous_posting"
-                    name="anonymous_posting"
-                    checked={formData.anonymous_posting}
-                    onChange={(e) => {
-                      console.log('Checkbox changed:', e.target.checked);
-                      setFormData({...formData, anonymous_posting: e.target.checked});
-                    }}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="anonymous_posting" className="ml-2 block text-sm text-gray-700">
-                    Post reviews anonymously (show as "Anonymous Diner")
-                  </label>
-                </div>
-
                 <div className="flex gap-4">
                   <button
                     type="submit"
@@ -224,14 +204,6 @@ export default function ProfilePage() {
                   <div className="flex justify-between items-center py-4 border-b border-gray-200">
                     <span className="text-gray-600 font-medium">User ID</span>
                     <span className="text-gray-900 text-lg">{user?.id}</span>
-                  </div>
-
-                  {/* Anonymous Posting */}
-                  <div className="flex justify-between items-center py-4">
-                    <span className="text-gray-600 font-medium">Anonymous Posting</span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${profile?.anonymous_posting ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {profile?.anonymous_posting ? 'Enabled' : 'Disabled'}
-                    </span>
                   </div>
                 </div>
 

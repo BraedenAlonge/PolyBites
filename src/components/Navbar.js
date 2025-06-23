@@ -6,6 +6,7 @@ import userIcon from '../assets/Misc/User.png';
 export default function Navbar({ onSignInOpen, onSignUpOpen }) {
   const { user, logout } = useAuth();
   const [userName, setUserName] = useState('');
+  const [userNames, setUserNames] = useState({});
 
   useEffect(() => {
     const fetchUserName = async (userId) => {
@@ -17,7 +18,10 @@ export default function Navbar({ onSignInOpen, onSignUpOpen }) {
           throw new Error('Failed to fetch profile');
         }
         const userData = await response.json();
-        setUserName(userData.name);
+        setUserNames(prev => ({
+          ...prev,
+          [userId]: userData.name
+        }));
       } catch (err) {
           console.error('Error fetching profile:', err);
           setUserName('User #' + userId);

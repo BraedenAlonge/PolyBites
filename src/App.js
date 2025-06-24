@@ -173,7 +173,7 @@ function HomePage({ restaurants, loading, error }) {
   return (
     <main>
       {/* Hero Section */}
-      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white pt-5 pb-0 mb-12 relative overflow-hidden" style={{ height: '75vh', minHeight: 400 }}>
+      <div className="bg-gradient-to-b from-green-600 to-green-500 text-white pt-5 pb-24 mb-20 relative overflow-hidden" style={{ height:  '65vh', minHeight: 400 }}>
         {/* Opaque food image background */}
         <img
           src={require('./assets/images/food-back.jpg')}
@@ -195,18 +195,21 @@ function HomePage({ restaurants, loading, error }) {
           <div className="w-24 h-1 bg-white mx-auto rounded-full opacity-50"></div>
         </div>
         {/* Wave SVG divider */}
-        {/* <div className="absolute left-0 right-0 bottom-0 w-full overflow-hidden leading-none pointer-events-none" style={{zIndex: 2, lineHeight: 0}}>
+        {/* <div
+          className="absolute left-0 right-0 bottom-0 w-full overflow-hidden leading-none pointer-events-none z-10"
+          style={{ lineHeight: 0, bottom: '-1px' }}
+        >
           <svg
             width="100%"
             height="100%"
-            viewBox="0 0 1440 490"
+            viewBox="0 0 1440 320"
             xmlns="http://www.w3.org/2000/svg"
             preserveAspectRatio="none"
-            className="w-full h-40"
-            style={{ display: 'block', width: '108%', height: '100%' }}
+            className="w-full h-80"
+            style={{ display: 'block', width: '120%', height: '100%', transform: 'scale(-1, -1)' }}
           >
             <path
-              d="M -100,500 L -100,400 C -47,423.5 6,447 81,445 C 156,443 253,415.4 327,396 C 401,376.5 452,365.2 502,374 C 552,382.8 600,411.8 684,415 C 768,418.2 887,395.7 959,381 C 1031,366.3 1055,359.5 1111,364 C 1167,368.5 1253,384.2 1340,400 L 1440,400 L 1440,500 L -100,500 Z"
+              d="M0,32L48,32C96,32,192,32,288,58.7C384,85,480,139,576,149.3C672,160,768,128,864,122.7C960,117,1056,139,1152,154.7C1248,171,1344,181,1392,186.7L1440,192L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
               stroke="none"
               strokeWidth="0"
               fill="#f0fdf4"
@@ -217,7 +220,7 @@ function HomePage({ restaurants, loading, error }) {
       </div>
 
       {/* Restaurants Section */}
-      <div className="container mx-auto px-4 -mt-12 pt-5 pb-4  rounded-t-lg" >
+      <div className="container mx-auto px-4 -mt-44 pt-32 pb-4 rounded-t-lg z-20" style={{position: 'relative'}}>
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-600 mb-4"></div>

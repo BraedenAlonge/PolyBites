@@ -22,6 +22,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [likeCounts, setLikeCounts] = useState(new Map()); // Track like counts for each review
   const [userLikes, setUserLikes] = useState(new Set()); // Track which reviews the user has liked
   const [likeLoading, setLikeLoading] = useState(new Set()); // Track which reviews are being processed
+  const [sortBy, setSortBy] = useState('likes'); // Sort by likes (default) or recent
 
   const handleCloseSignIn = () => {
     setShowSignIn(false);
@@ -372,6 +373,31 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   // Throttled version of handleLikeReview
   const throttledHandleLikeReview = throttle(handleLikeReview, 500); // 500ms throttle
 
+  // Sort reviews based on selected option
+  const getSortedReviews = () => {
+    if (!reviews.length) return [];
+    
+    const sortedReviews = [...reviews];
+    
+    if (sortBy === 'likes') {
+      // Sort by number of likes (descending)
+      sortedReviews.sort((a, b) => {
+        const likesA = likeCounts.get(a.id) || 0;
+        const likesB = likeCounts.get(b.id) || 0;
+        return likesB - likesA;
+      });
+    } else if (sortBy === 'recent') {
+      // Sort by creation date (most recent first)
+      sortedReviews.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0);
+        const dateB = new Date(b.created_at || 0);
+        return dateB - dateA;
+      });
+    }
+    
+    return sortedReviews;
+  };
+
   // Returns a color from red (0) to green (5) for the rating
   const getRatingColor = (rating) => {
     // Clamp rating between 0 and 5
@@ -459,7 +485,21 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
             <>
               <p className="text-gray-600 mb-4">{foodItem.description}</p>
               <div className="mt-6">
-                <h4 className="text-lg font-medium text-gray-800 mb-2">Reviews</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-medium text-gray-800">Reviews</h4>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="sort-select" className="text-sm text-gray-600">Sort by:</label>
+                    <select
+                      id="sort-select"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="likes">Most Liked</option>
+                      <option value="recent">Most Recent</option>
+                    </select>
+                  </div>
+                </div>
                 {/* Average rating display */}
                 <div className="flex items-center gap-2 mb-4">
                   <span
@@ -477,12 +517,21 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                   <div className="text-center text-red-600 py-4">Error loading reviews: {error}</div>
                 ) : reviews.length > 0 ? (
                   <div className="space-y-3">
-                    {reviews.map((review) => (
+                    {getSortedReviews().map((review) => (
                       <div key={review.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-800">
-                            {formatName(userNames[review.user_id]) || 'User # ' + review.user_id}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-800">
+                              {formatName(userNames[review.user_id]) || 'User # ' + review.user_id}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {review.created_at ? new Date(review.created_at).toLocaleDateString('en-US', {
+                                month: '2-digit',
+                                day: '2-digit',
+                                year: 'numeric'
+                              }) : ''}
+                            </span>
+                          </div>
 
                           <div className="flex items-center gap-2">
                            <span className="text-green-600 flex items-center">{renderStars(review.rating)}</span>

@@ -1,32 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onSignInOpen, onSignUpOpen }) {
   const { user, logout } = useAuth();
-  const [userName, setUserName] = useState('');
+  // const [userName, setUserName] = useState('');
 
-  useEffect(() => {
-    const fetchUserName = async (userId) => {
-      if (!userId) return;
+  // useEffect(() => {
+  //   const fetchUserName = async (userId) => {
+  //     if (!userId) return;
       
-      try {
-        const response = await fetch(`http://localhost:5000/api/profiles/auth/${userId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch profile');
-        }
-        const userData = await response.json();
-        setUserName(userData.name);
-      } catch (err) {
-          console.error('Error fetching profile:', err);
-          setUserName('User #' + userId);
-      }
-    };
+  //     try {
+  //       const response = await fetch(`http://localhost:5000/api/profiles/auth/${userId}`);
+  //       if (!response.ok) {
+  //         throw new Error('Failed to fetch profile');
+  //       }
+  //       const userData = await response.json();
+  //       setUserName(userData.name);
+  //     } catch (err) {
+  //         console.error('Error fetching profile:', err);
+  //         setUserName('User #' + userId);
+  //     }
+  //   };
 
-    if (user?.id) {
-      fetchUserName(user.id);
-    }
-  }, [user?.id]);
+  //   if (user?.id) {
+  //     fetchUserName(user.id);
+  //   }
+  // }, [user?.id]);
 
   return (
     <header className="bg-green-600 text-white shadow-lg sticky top-0 z-50">

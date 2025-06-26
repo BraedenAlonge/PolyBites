@@ -279,8 +279,8 @@ function HomePage({ restaurants, loading, error }) {
                           onChange={(e) => handleSort(e.target.value)}
                           className={`appearance-none cursor-pointer px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 ${
                             sortBy === 'rating' 
-                              ? 'text-gray-500 bg-gray-50' 
-                              : 'text-gray-900 bg-white border-green-200'
+                              ? 'bg-gray-50' 
+                              : 'bg-white border-green-200'
                           }`}
                         >
                           <option value="rating" className="text-gray-900">⭐ Highest Rating</option>
@@ -291,7 +291,7 @@ function HomePage({ restaurants, loading, error }) {
                         
                         {/* Custom dropdown arrow */}
                         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                          <svg className={`w-4 h-4 transition-transform duration-200 ${sortBy !== 'rating' ? 'text-green-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className={`w-4 h-4 transition-transform duration-200 text-gray-400`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </div>
@@ -314,7 +314,7 @@ function HomePage({ restaurants, loading, error }) {
                   </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-12">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-12 justify-items-center">
                 {filteredRestaurants.map((restaurant) => (
                   <Restaurant
                     key={restaurant.id}

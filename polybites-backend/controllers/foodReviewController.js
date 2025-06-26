@@ -167,50 +167,44 @@ export const getLike = async (req, res) => {
   }
 };
 
-export const addLike = async (req, res) => {
+export const toggleLike = async (req, res) => {
   const { review_id, user_id } = req.body;
 
-  try {
-    // Add like to likes table
-    await db.query(
-      'INSERT INTO likes (user_id, food_review_id) VALUES ($1, $2)',
-      [user_id, review_id]
-    );
-
-    // Get updated like count
-    const { rows: [likeCount] } = await db.query(
-      'SELECT COUNT(*) as count FROM likes WHERE food_review_id = $1',
-      [review_id]
-    );
-
-    res.json({ likes: parseInt(likeCount.count) });
-  } catch (err) {
-    console.error('Database Query Error:', err.message);
-    // Check for unique constraint violation (user already liked this review)
-    if (err.code === '23505') {
-      return res.status(409).json({ error: 'User has already liked this review' });
-    }
-    res.status(500).json({ error: 'Internal server error' });
+  if (!review_id || !user_id) {
+    return res.status(400).json({ error: 'Review ID and User ID are required' });
   }
-};
-
-export const removeLike = async (req, res) => {
-  const { review_id, user_id } = req.body;
 
   try {
-    // Remove like from likes table
-    await db.query(
-      'DELETE FROM likes WHERE user_id = $1 AND food_review_id = $2',
-      [user_id, review_id]
+    // First check if the like already exists
+    const { rows: existingLike } = await db.query(
+      'SELECT * FROM likes WHERE food_review_id = $1 AND user_id = $2',
+      [review_id, user_id]
     );
 
-    // Get updated like count
+    if (existingLike.length > 0) {
+      // Like exists, so remove it
+      await db.query(
+        'DELETE FROM likes WHERE food_review_id = $1 AND user_id = $2',
+        [review_id, user_id]
+      );
+    } else {
+      // Like doesn't exist, so add it
+      await db.query(
+        'INSERT INTO likes (food_review_id, user_id) VALUES ($1, $2)',
+        [review_id, user_id]
+      );
+    }
+
+    // Get the updated like count
     const { rows: [likeCount] } = await db.query(
-      'SELECT COUNT(*) as count FROM likes WHERE food_review_id = $1',
+      'SELECT COUNT(*) as likes FROM likes WHERE food_review_id = $1',
       [review_id]
     );
 
-    res.json({ likes: parseInt(likeCount.count) });
+    res.json({ 
+      likes: parseInt(likeCount.likes),
+      liked: existingLike.length === 0 // If we added a like, user now likes it
+    });
   } catch (err) {
     console.error('Database Query Error:', err.message);
     res.status(500).json({ error: 'Internal server error' });
@@ -219,54 +213,16 @@ export const removeLike = async (req, res) => {
 
 export const getReviewLikes = async (req, res) => {
   const { reviewId } = req.params;
-  const { user_id } = req.query;
 
   try {
     const { rows: [result] } = await db.query(
-      `SELECT 
-        COUNT(*) as likes,
-        CASE WHEN EXISTS (
-          SELECT 1 FROM likes 
-          WHERE food_review_id = $1 AND user_id = $2
-        ) THEN true ELSE false END as userLiked
-       FROM likes
-       WHERE food_review_id = $1`,
-      [reviewId, user_id]
+      'SELECT COUNT(*) as likes FROM likes WHERE food_review_id = $1',
+      [reviewId]
     );
 
     res.json({
-      likes: parseInt(result.likes),
-      userLiked: result.userliked
+      likes: parseInt(result.likes)
     });
-  } catch (err) {
-    console.error('Database Query Error:', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-export const getReviewsWithLikes = async (req, res) => {
-  const { foodId } = req.params;
-  const { user_id } = req.query;
-
-  try {
-    // Get all reviews for the food item with like counts and user's like status
-    const { rows: reviews } = await db.query(
-      `SELECT 
-        fr.*,
-        COUNT(l.food_review_id) as likes,
-        CASE WHEN EXISTS (
-          SELECT 1 FROM likes 
-          WHERE food_review_id = fr.id AND user_id = $2
-        ) THEN true ELSE false END as liked
-       FROM food_reviews fr
-       LEFT JOIN likes l ON l.food_review_id = fr.id
-       WHERE fr.food_id = $1
-       GROUP BY fr.id
-       ORDER BY fr.id ASC`,
-      [foodId, user_id]
-    );
-
-    res.json(reviews);
   } catch (err) {
     console.error('Database Query Error:', err.message);
     res.status(500).json({ error: 'Internal server error' });

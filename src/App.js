@@ -57,7 +57,7 @@ function HomePage({ restaurants, loading, error }) {
   const [filteredRestaurants, setFilteredRestaurants] = useState(restaurants);
   const [hasSearched, setHasSearched] = useState(false);
   const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('default');
+  const [sortBy, setSortBy] = useState('rating');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   // Animation state for subtitle lines
@@ -108,7 +108,12 @@ function HomePage({ restaurants, loading, error }) {
         });
         break;
       default:
-        sorted.sort((a, b) => a.id - b.id);
+        // Default to reviews sorting
+        sorted.sort((a, b) => {
+          const aRating = parseInt(a.average_rating) || 0;
+          const bRating = parseInt(b.average_rating) || 0;
+          return bRating - aRating;
+        });
     }
     
     return sorted;
@@ -167,7 +172,7 @@ function HomePage({ restaurants, loading, error }) {
   };
 
   const clearSort = () => {
-    setSortBy('default');
+    setSortBy('rating');
   };
 
   return (
@@ -244,41 +249,68 @@ function HomePage({ restaurants, loading, error }) {
                       value={searchTerm}
                       onChange={handleSearch}
                       placeholder="Search restaurants..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent shadow-sm"
                     />
                     {searchTerm && (
                       <button
                         type="button"
                         onClick={clearSearch}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                         aria-label="Clear search"
                       >
-                        ×
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                       </button>
                     )}
                   </div>
                   
-                  <div className="relative w-48">
-                    <select
-                      value={sortBy}
-                      onChange={(e) => handleSort(e.target.value)}
-                      className={`w-full cursor-pointer px-4 py-2 pr-14 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white appearance-none ${sortBy === 'default' ? 'text-gray-400' : 'text-gray-900'}`}
-                    >
-                      <option value="default" hidden>Sort by</option>
-                      <option value="rating" className="text-gray-900">Rating</option>
-                      <option value="reviews" className="text-gray-900">Reviews</option>
-                      <option value="menu_items" className="text-gray-900">Menu Items</option>
-                      <option value="location" className="text-gray-900">Location</option>
-                    </select>
-                    {sortBy !== 'default' && (
-                      <button
-                        onClick={clearSort}
-                        className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        aria-label="Clear sort"
-                      >
-                        ×
-                      </button>
-                    )}
+                  <div className="relative">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M7 8h9m-9 4h6m-6 4h3" />
+                        </svg>
+                        Sort
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={sortBy}
+                          onChange={(e) => handleSort(e.target.value)}
+                          className={`appearance-none cursor-pointer px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 ${
+                            sortBy === 'rating' 
+                              ? 'text-gray-500 bg-gray-50' 
+                              : 'text-gray-900 bg-white border-green-200'
+                          }`}
+                        >
+                          <option value="rating" className="text-gray-900">⭐ Highest Rating</option>
+                          <option value="reviews" className="text-gray-900">📝 Most Reviews</option>
+                          <option value="menu_items" className="text-gray-900">🍽️ Most Menu Items</option>
+                          <option value="location" className="text-gray-900">📍 Location</option>
+                        </select>
+                        
+                        {/* Custom dropdown arrow */}
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <svg className={`w-4 h-4 transition-transform duration-200 ${sortBy !== 'rating' ? 'text-green-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                        
+                        {/* Clear sort button */}
+                        {sortBy !== 'rating' && (
+                          <button
+                            onClick={clearSort}
+                            className="absolute -right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50"
+                            aria-label="Clear sort"
+                            title="Clear sort"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

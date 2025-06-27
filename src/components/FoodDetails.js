@@ -36,6 +36,12 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [showSignUp, setShowSignUp] = useState(false);
   const { user } = useAuth();
   const [reviewStats, setReviewStats] = useState({ review_count: 0, average_rating: 0 });
+  
+  // Like system state
+  const [likeCounts, setLikeCounts] = useState(new Map()); // Track like counts for each review
+  const [userLikes, setUserLikes] = useState(new Set()); // Track which reviews the user has liked
+  const [likeLoading, setLikeLoading] = useState(new Set()); // Track which reviews are being processed
+  const [sortBy, setSortBy] = useState('likes'); // Sort by likes (default) or recent
 
   const handleCloseSignIn = () => {
     setShowSignIn(false);
@@ -94,15 +100,22 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
       if (!foodItem?.id) return;
       
       try {
+        // Reset like tracking when opening
+        setLikeCounts(new Map());
+        setUserLikes(new Set());
+        setLikeLoading(new Set());
         
         const [reviewsResponse, statsResponse] = await Promise.all([
           fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`),
           fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}/stats`)
         ]);
 
+        console.log('Reviews URL:', `http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
+
         if (!reviewsResponse.ok) {
-          const errorData = await reviewsResponse.json();
-          throw new Error(errorData.error || 'Failed to fetch reviews');
+          const errorText = await reviewsResponse.text();
+          console.error('Reviews response error:', reviewsResponse.status, errorText);
+          throw new Error(errorText || 'Failed to fetch reviews');
         }
         if (!statsResponse.ok) {
           const errorData = await statsResponse.json();
@@ -114,30 +127,59 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
           statsResponse.json()
         ]);
 
-        // Get like status for each review if user is logged in
-        if (user) {
-          const reviewsWithLikes = await Promise.all(
-            reviewsData.map(async (review) => {
+        // Fetch like counts for all reviews
+        const likeCountsMap = new Map();
+        const userLikesSet = new Set();
+        
+        if (reviewsData.length > 0) {
+          // Get like counts for all reviews
+          const likeCountsPromises = reviewsData.map(async (review) => {
+            try {
+              const likeResponse = await fetch(`http://localhost:5000/api/food-reviews/${review.id}/likes`);
+              if (likeResponse.ok) {
+                const likeData = await likeResponse.json();
+                return { reviewId: review.id, count: likeData.likes || 0 };
+              }
+              return { reviewId: review.id, count: 0 };
+            } catch (err) {
+              console.error('Error fetching like count for review:', review.id, err);
+              return { reviewId: review.id, count: 0 };
+            }
+          });
+
+          const likeCountsResults = await Promise.all(likeCountsPromises);
+          likeCountsResults.forEach(({ reviewId, count }) => {
+            likeCountsMap.set(reviewId, count);
+          });
+
+          // If user is logged in, get their like status for each review
+          if (user) {
+            const userLikesPromises = reviewsData.map(async (review) => {
               try {
-                const likeResponse = await fetch(
-                  `http://localhost:5000/api/food-reviews/${review.id}/like/${user.id}`
-                );
+                const likeResponse = await fetch(`http://localhost:5000/api/food-reviews/${review.id}/like/${user.id}`);
                 if (likeResponse.ok) {
                   const { exists } = await likeResponse.json();
-                  return { ...review, liked: exists };
+                  return { reviewId: review.id, liked: exists };
                 }
-                return review;
+                return { reviewId: review.id, liked: false };
               } catch (err) {
-                console.error('Error fetching like status:', err);
-                return review;
+                console.error('Error fetching user like status for review:', review.id, err);
+                return { reviewId: review.id, liked: false };
               }
-            })
-          );
-          setReviews(reviewsWithLikes);
-        } else {
-          setReviews(reviewsData);
+            });
+
+            const userLikesResults = await Promise.all(userLikesPromises);
+            userLikesResults.forEach(({ reviewId, liked }) => {
+              if (liked) {
+                userLikesSet.add(reviewId);
+              }
+            });
+          }
         }
 
+        setLikeCounts(likeCountsMap);
+        setUserLikes(userLikesSet);
+        setReviews(reviewsData);
         setReviewStats(statsData);
         
         // Fetch user names for each review
@@ -277,74 +319,103 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     }
   };
 
+  // Throttle function to prevent spam clicking
+  const throttle = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+      if (timeoutId) return; // If already throttled, ignore
+      timeoutId = setTimeout(() => {
+        func(...args);
+        timeoutId = null;
+      }, delay);
+    };
+  };
+
   const handleLikeReview = async (reviewId) => {
     if (!user) {
       setShowSignIn(true);
       return;
     }
 
-    try {
-      console.log('Checking like status for review:', reviewId, 'user:', user.id);
-      
-      // First check if the user has already liked this review
-      const checkResponse = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}/like/${user.id}`);
-      if (!checkResponse.ok) {
-        throw new Error('Failed to check like status');
-      }
-      const { exists } = await checkResponse.json();
+    // Prevent multiple clicks while processing
+    if (likeLoading.has(reviewId)) {
+      return;
+    }
 
-      let response;
-      if (exists) {
-        // Remove like
-        response = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}/like`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            review_id: reviewId,
-            user_id: user.id 
-          }),
-          credentials: 'include'
-        });
-      } else {
-        // Add like
-        response = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}/like`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            review_id: reviewId,
-            user_id: user.id 
-          }),
-          credentials: 'include'
-        });
-      }
+    try {
+      // Set loading state
+      setLikeLoading(prev => new Set(prev).add(reviewId));
+
+      // Call the toggle like API
+      const response = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}/toggle-like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          review_id: reviewId, 
+          user_id: user.id 
+        })
+      });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update like');
+        throw new Error('Failed to toggle like');
       }
 
       const data = await response.json();
-      console.log('Like update response:', data);
       
-      // Update the review's likes count and liked state
-      setReviews(prevReviews => 
-        prevReviews.map(review => 
-          review.id === reviewId 
-            ? { ...review, likes: data.likes, liked: !exists }
-            : review
-        )
-      );
-    } catch (error) {
-      console.error('Error updating like:', error);
-      alert(error.message || 'Failed to update like. Please try again.');
-    }
+      // Update like count
+      setLikeCounts(prev => new Map(prev).set(reviewId, data.likes));
+      
+      // Update user like status
+      setUserLikes(prev => {
+        const newSet = new Set(prev);
+        if (data.liked) {
+          newSet.add(reviewId);
+        } else {
+          newSet.delete(reviewId);
+        }
+        return newSet;
+      });
 
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      alert('Failed to update like. Please try again.');
+    } finally {
+      // Remove loading state
+      setLikeLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(reviewId);
+        return newSet;
+      });
+    }
   };
 
+  // Throttled version of handleLikeReview
+  const throttledHandleLikeReview = throttle(handleLikeReview, 500); // 500ms throttle
+
+  // Sort reviews based on selected option
+  const getSortedReviews = () => {
+    if (!reviews.length) return [];
+    
+    const sortedReviews = [...reviews];
+    
+    if (sortBy === 'likes') {
+      // Sort by number of likes (descending)
+      sortedReviews.sort((a, b) => {
+        const likesA = likeCounts.get(a.id) || 0;
+        const likesB = likeCounts.get(b.id) || 0;
+        return likesB - likesA;
+      });
+    } else if (sortBy === 'recent') {
+      // Sort by creation date (most recent first)
+      sortedReviews.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0);
+        const dateB = new Date(b.created_at || 0);
+        return dateB - dateA;
+      });
+    }
+    
+    return sortedReviews;
+  };
 
   // Returns a color from red (0) to green (5) for the rating
   const getRatingColor = (rating) => {
@@ -355,9 +426,19 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     return `hsl(${hue}, 70%, 40%)`;
   };
 
+  const handleClose = async () => {
+    // Reset like tracking
+    setLikeCounts(new Map());
+    setUserLikes(new Set());
+    setLikeLoading(new Set());
+    
+    // Call the original onClose
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="food-review-popup bg-white rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={handleClose}>
+      <div className="food-review-popup bg-white rounded-lg max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="relative flex flex-col items-center justify-center">
           <div className="flex flex-row justify-center items-center gap-4 my-4">
             <img
@@ -377,7 +458,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
             />
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-4 right-4 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors"
           >
             <span className="text-gray-800 text-xl">×</span>
@@ -423,7 +504,21 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
             <>
               <p className="text-gray-600 mb-4">{foodItem.description}</p>
               <div className="mt-6">
-                <h4 className="text-lg font-medium text-gray-800 mb-2">Reviews</h4>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-medium text-gray-800">Reviews</h4>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="sort-select" className="text-sm text-gray-600">Sort by:</label>
+                    <select
+                      id="sort-select"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="likes">Most Liked</option>
+                      <option value="recent">Most Recent</option>
+                    </select>
+                  </div>
+                </div>
                 {/* Average rating display */}
                 <div className="flex items-center gap-2 mb-4">
                   <span
@@ -441,12 +536,22 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                   <div className="text-center text-red-600 py-4">Error loading reviews: {error}</div>
                 ) : reviews.length > 0 ? (
                   <div className="space-y-3">
-                    {reviews.map((review) => (
+                    {getSortedReviews().map((review) => (
                       <div key={review.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-gray-800">
-                            {review.anonymous ? getRandomAnonymousName(review.id) : (formatName(userNames[review.user_id]) || 'User # ' + review.user_id)}
-                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-gray-800">
+                              {review.anonymous ? getRandomAnonymousName(review.id) : (formatName(userNames[review.user_id]) || 'User # ' + review.user_id)}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {review.created_at ? new Date(review.created_at).toLocaleDateString('en-US', {
+                                month: '2-digit',
+                                day: '2-digit',
+                                year: 'numeric'
+                              }) : ''}
+                            </span>
+                          </div>
 
                           <div className="flex items-center gap-2">
                            <span className="text-green-600 flex items-center">{renderStars(review.rating)}</span>
@@ -466,24 +571,33 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                         <p className="text-gray-600">{review.text}</p>
                         <div className="flex justify-end mt-2">
                           <button
-                            onClick={() => handleLikeReview(review.id)}
-                            className="flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors"
-                            title={review.liked ? "Unlike review" : "Like review"}
+                            onClick={() => throttledHandleLikeReview(review.id)}
+                            disabled={likeLoading.has(review.id)}
+                            className={`flex items-center gap-1 transition-colors ${
+                              likeLoading.has(review.id) 
+                                ? 'text-gray-400 cursor-not-allowed' 
+                                : 'text-gray-500 hover:text-red-500'
+                            }`}
+                            title={userLikes.has(review.id) ? "Unlike review" : "Like review"}
                           >
-                            <svg 
-                              xmlns="http://www.w3.org/2000/svg" 
-                              className="h-5 w-5" 
-                              viewBox="0 0 20 20" 
-                              fill={review.liked ? "currentColor" : "none"}
-                              stroke="currentColor"
-                            >
-                              <path 
-                                fillRule="evenodd" 
-                                d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
-                                clipRule="evenodd" 
-                              />
-                            </svg>
-                            <span className="text-sm">{review.likes || 0}</span>
+                            {likeLoading.has(review.id) ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                            ) : (
+                              <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                className="h-5 w-5" 
+                                viewBox="0 0 20 20" 
+                                fill={userLikes.has(review.id) ? "currentColor" : "none"}
+                                stroke="currentColor"
+                              >
+                                <path 
+                                  fillRule="evenodd" 
+                                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
+                                  clipRule="evenodd" 
+                                />
+                              </svg>
+                            )}
+                            <span className="text-sm">{likeCounts.get(review.id) || 0}</span>
                           </button>
                         </div>
                       </div>

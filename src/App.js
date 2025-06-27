@@ -187,9 +187,9 @@ function HomePage({ restaurants, loading, error }) {
           style={{ zIndex: 0, minHeight: 600 }}
         />
         {/* Overlay for better blending */}
-        <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1, paddingTop: 0 }}></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1, paddingTop: 0}}></div>
         <div className="container mx-auto px-4 text-center relative z-10 flex flex-col justify-center items-center h-full" >
-          <h1 className="text-8xl text-black md:text-8xl font-extrabold mb-8 animate-fade-in">
+          <h1 className="text-8xl text-black md:text-8xl font-extrabold mb-8 animate-fade-in" style={{marginTop: 35}}>
             PolyBites
           </h1>
           <p className="text-4xl md:text-4xl text-green-100 mb-12 font-semibold">

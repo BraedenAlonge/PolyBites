@@ -86,3 +86,34 @@ export const createProfile = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const updateProfile = async (req, res) => {
+  const { auth_id } = req.params;
+  const { name } = req.body;
+  
+  console.log('updateProfile called with:', { auth_id, name });
+  
+  if (!name) {
+    return res.status(400).json({ error: 'Name is required' });
+  }
+
+  try {
+    console.log('Executing SQL update with:', [name, auth_id]);
+    
+    const { rows } = await db.query(
+      'UPDATE profiles SET name = $1 WHERE auth_id = $2 RETURNING id, name, created_at',
+      [name, auth_id]
+    );
+    
+    console.log('SQL update result:', rows);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

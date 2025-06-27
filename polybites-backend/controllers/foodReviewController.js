@@ -75,12 +75,12 @@ export const getFoodReviewDetails = async (req, res) => {
 };
 
 export const createFoodReview = async (req, res) => {
-  const { user_id, food_id, rating, text } = req.body;
+  const { user_id, food_id, rating, text, anonymous } = req.body;
 
   try {
     const { rows } = await db.query(
-      'INSERT INTO food_reviews (user_id, food_id, rating, text) VALUES ($1, $2, $3, $4) RETURNING *',
-      [user_id, food_id, rating, text]
+      'INSERT INTO food_reviews (user_id, food_id, rating, text, anonymous) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [user_id, food_id, rating, text, anonymous]
     );
     res.status(201).json(rows[0]);
   } catch (err) {

@@ -7,6 +7,25 @@ import fullStar from '../assets/stars/star.png';
 import halfStar from '../assets/stars/half_star.png';
 import emptyStar from '../assets/stars/empty_star.png';
 
+const ANONYMOUS_NAMES = [
+  "Anonymous Diner",
+  "Faceless Foodie",
+  "Redacted Rater",
+  "Masked Muncher",
+  "Nameless Nibbler",
+  "Mystery Michelin",
+  "Agent Appétit"
+];
+
+function getRandomAnonymousName(seed) {
+  // Use a deterministic seed (e.g., review id) so the name doesn't change on rerender
+  if (typeof seed === 'number') {
+    return ANONYMOUS_NAMES[seed % ANONYMOUS_NAMES.length];
+  }
+  // fallback
+  return ANONYMOUS_NAMES[0];
+}
+
 export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [isWritingReview, setIsWritingReview] = useState(false);
   const [reviews, setReviews] = useState([]);
@@ -520,9 +539,10 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
                     {getSortedReviews().map((review) => (
                       <div key={review.id} className="bg-gray-50 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-2">
+
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-gray-800">
-                              {formatName(userNames[review.user_id]) || 'User # ' + review.user_id}
+                              {review.anonymous ? getRandomAnonymousName(review.id) : (formatName(userNames[review.user_id]) || 'User # ' + review.user_id)}
                             </span>
                             <span className="text-sm text-gray-500">
                               {review.created_at ? new Date(review.created_at).toLocaleDateString('en-US', {

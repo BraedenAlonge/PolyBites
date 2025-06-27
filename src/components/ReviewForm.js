@@ -8,6 +8,7 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(null);
   const [reviewText, setReviewText] = useState('');
+  const [anonymous, setAnonymous] = useState(false);
   const { user } = useAuth();
 
   const handleStarClick = (value) => {
@@ -122,10 +123,12 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
       user_id: user.id,
       food_id: foodItem.id,
       rating,
-      text: reviewText
+      text: reviewText,
+      anonymous
     });
     setRating(5);
     setReviewText('');
+    setAnonymous(false);
   };
 
   return (
@@ -166,6 +169,18 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
             placeholder="Share your thoughts about this dish..."
             required
           />
+        </div>
+
+        <div className="mb-4">
+          <label className="inline-flex items-center">
+            <input
+              type="checkbox"
+              checked={anonymous}
+              onChange={e => setAnonymous(e.target.checked)}
+              className="form-checkbox h-5 w-5 text-green-600"
+            />
+            <span className="ml-2 text-gray-700">Post as Anonymous</span>
+          </label>
         </div>
 
         <div className="flex justify-end gap-3">

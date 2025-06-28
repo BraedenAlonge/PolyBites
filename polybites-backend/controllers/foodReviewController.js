@@ -108,14 +108,43 @@ export const getFoodReviewStats = async (req, res) => {
   }
 };
 
+export const getFoodReviewStatsByRestaurant = async (req, res) => {
+  const { restaurantId } = req.params;
+  try {
+    const { rows } = await db.query(
+      `SELECT 
+        f.id as food_id,
+        COUNT(fr.id) as review_count,
+        COALESCE(AVG(fr.rating), 0) as average_rating
+       FROM foods f
+       LEFT JOIN food_reviews fr ON fr.food_id = f.id
+       WHERE f.restaurant_id = $1
+       GROUP BY f.id
+       ORDER BY f.id`,
+      [restaurantId]
+    );
+    
+    // Convert to a map for easier frontend consumption
+    const ratingsMap = {};
+    rows.forEach(row => {
+      ratingsMap[row.food_id] = {
+        review_count: parseInt(row.review_count),
+        average_rating: parseFloat(row.average_rating)
+      };
+    });
+    
+    res.json(ratingsMap);
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const deleteFoodReview = async (req, res) => {
   const { id } = req.params;
   const { user_id } = req.body;
 
-  console.log('Delete request received:', { id, user_id });
-
   if (!user_id) {
-    console.error('No user_id provided in request body');
     return res.status(400).json({ error: 'User ID is required' });
   }
 
@@ -126,8 +155,6 @@ export const deleteFoodReview = async (req, res) => {
       [id, user_id]
     );
 
-    console.log('Review check result:', rows);
-
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Food review not found or unauthorized' });
     }
@@ -136,8 +163,7 @@ export const deleteFoodReview = async (req, res) => {
     await db.query('DELETE FROM likes WHERE food_review_id = $1', [id]);
 
     // Then delete the review
-    const deleteResult = await db.query('DELETE FROM food_reviews WHERE id = $1 RETURNING *', [id]);
-    console.log('Delete result:', deleteResult.rows);
+    await db.query('DELETE FROM food_reviews WHERE id = $1 RETURNING *', [id]);
 
     res.status(200).json({ message: 'Review deleted successfully' });
   } catch (err) {
@@ -148,10 +174,8 @@ export const deleteFoodReview = async (req, res) => {
 
 export const getLike = async (req, res) => {
   const { reviewId, userId } = req.params;
-  console.log('Checking like for review:', reviewId, 'user:', userId);
 
   if (!reviewId || !userId) {
-    console.error('Missing required parameters:', { reviewId, userId });
     return res.status(400).json({ error: 'Review ID and User ID are required' });
   }
 

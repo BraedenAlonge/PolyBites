@@ -51,9 +51,11 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
 
+    // Check for profanity in name
     if (filter.isProfane(formData.name)) {
-      alert('Your name contains inappropriate language. Please revise your name and try again.');
+      setError('Name contains inappropriate language. Please choose a different name.');
       return;
     }
 
@@ -61,10 +63,8 @@ export default function ProfilePage() {
       const requestBody = {
         name: formData.name
       };
-      
-      console.log('Sending profile update request:', requestBody);
-      
-      const response = await fetch(`http://localhost:5000/api/profiles/auth/${user.id}`, {
+
+      const response = await fetch(`http://localhost:5000/api/profiles/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -72,21 +72,16 @@ export default function ProfilePage() {
         body: JSON.stringify(requestBody),
       });
 
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response:', errorText);
-        throw new Error('Failed to update profile');
+      if (response.ok) {
+        const updatedProfile = await response.json();
+        setProfile(updatedProfile);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update profile');
       }
-
-      const updatedProfile = await response.json();
-      console.log('Updated profile received:', updatedProfile);
-      setProfile(updatedProfile);
-      setIsEditing(false);
     } catch (err) {
       console.error('Error updating profile:', err);
-      setError(err.message);
+      setError('An error occurred while updating your profile');
     }
   };
 

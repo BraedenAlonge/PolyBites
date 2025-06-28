@@ -5,7 +5,7 @@ import fullStar from '../assets/stars/star.png';
 import halfStar from '../assets/stars/half_star.png';
 import emptyStar from '../assets/stars/empty_star.png';
 
-export default function RestaurantDetails({ restaurants }) {
+export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [selectedFood, setSelectedFood] = useState(null);
@@ -28,27 +28,19 @@ export default function RestaurantDetails({ restaurants }) {
         const data = await response.json();
         setMenuItems(data);
         
-        // Fetch ratings for all food items
-        const ratingsPromises = data.map(async (food) => {
-          try {
-            const ratingResponse = await fetch(`http://localhost:5000/api/food-reviews/food/${food.id}/stats`);
-            if (ratingResponse.ok) {
-              const ratingData = await ratingResponse.json();
-              return { foodId: food.id, ...ratingData };
-            }
-            return { foodId: food.id, review_count: 0, average_rating: 0 };
-          } catch (err) {
-            console.error('Error fetching rating for food:', food.id, err);
-            return { foodId: food.id, review_count: 0, average_rating: 0 };
-          }
-        });
-        
-        const ratingsResults = await Promise.all(ratingsPromises);
-        const ratingsMap = {};
-        ratingsResults.forEach(({ foodId, review_count, average_rating }) => {
-          ratingsMap[foodId] = { review_count, average_rating };
-        });
-        setFoodRatings(ratingsMap);
+        // Fetch all food ratings for this restaurant in one call
+        const ratingsResponse = await fetch(`http://localhost:5000/api/food-reviews/restaurant/${id}/stats`);
+        if (ratingsResponse.ok) {
+          const ratingsData = await ratingsResponse.json();
+          setFoodRatings(ratingsData);
+        } else {
+          // Fallback: set default ratings if the batch call fails
+          const defaultRatings = {};
+          data.forEach(food => {
+            defaultRatings[food.id] = { review_count: 0, average_rating: 0 };
+          });
+          setFoodRatings(defaultRatings);
+        }
         
         setLoading(false);
       } catch (err) {
@@ -201,8 +193,15 @@ export default function RestaurantDetails({ restaurants }) {
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
                             <p className="text-white text-lg font-medium">${item.price}</p>
                           </div>
-                          {/* Food Rating Badge - Same style as restaurant cards */}
-                          <div className="absolute top-0 right-0 m-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                          {/* Food Rating Badge - Gradient background based on rating */}
+                          <div 
+                            className="absolute top-0 right-0 m-4 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                            style={{ 
+                              background: `linear-gradient(135deg, ${getRatingColor(foodRating.average_rating)}, ${getRatingColor(Math.max(0, foodRating.average_rating - 1))})`,
+                              backdropFilter: 'blur(4px)',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                            }}
+                          >
                             {Number(foodRating.average_rating).toFixed(1)}
                             <img src={fullStar} alt="star" className="w-4 h-4 inline" />
                           </div>
@@ -232,6 +231,7 @@ export default function RestaurantDetails({ restaurants }) {
           isOpen={!!selectedFood}
           onClose={() => setSelectedFood(null)}
           foodItem={selectedFood}
+          onRestaurantUpdate={onRestaurantUpdate}
         />
       </div>
       <footer className="text-center text-xs text-gray-400 py-4 bg-green-50 mt-8">

@@ -12,22 +12,12 @@ const Restaurant = React.memo(({ data }) => {
 
   // Return early with loading state if data is not yet available
   if (!data) {
-    console.log('No data provided to Restaurant component');
-    return (
-      <div className="block bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 p-4">
-        <p className="text-gray-500">Loading restaurant data...</p>
-      </div>
-    );
+    return null;
   }
 
   // Return early if no ID is available
   if (!data.id) {
-    console.log('No restaurant ID provided');
-    return (
-      <div className="block bg-white shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 p-4">
-        <p className="text-gray-500">Invalid restaurant data</p>
-      </div>
-    );
+    return null;
   }
 
   return (

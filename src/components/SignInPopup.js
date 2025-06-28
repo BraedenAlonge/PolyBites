@@ -8,7 +8,6 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
     password: ''
   });
 
-  const [error, setError] = useState('');
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -28,24 +27,21 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: formData.emailOrPhone,
-        password: formData.password
+        password: formData.password,
       });
 
       if (error) {
-        setError(error.message);
-      } else {
-        onClose();  // Close popup
+        return;
       }
+
+      onClose();  // Close popup
     } catch (err) {
       console.error('Unexpected error:', err);
-      setError('An unexpected error occurred.');
     }
-    console.log('Sign in attempted with:', formData);
   };
 
   const handleChange = (e) => {

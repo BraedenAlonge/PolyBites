@@ -29,7 +29,7 @@ function getRandomAnonymousName(seed) {
   return ANONYMOUS_NAMES[0];
 }
 
-export default function FoodDetails({ isOpen, onClose, foodItem }) {
+export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpdate }) {
   const [isWritingReview, setIsWritingReview] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -147,8 +147,6 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
           fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}`),
           fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}/stats`)
         ]);
-
-        console.log('Reviews URL:', `http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
 
         if (!reviewsResponse.ok) {
           const errorText = await reviewsResponse.text();
@@ -285,6 +283,11 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
         }
       }
 
+      // Update restaurant ratings on homepage
+      if (onRestaurantUpdate) {
+        onRestaurantUpdate();
+      }
+
       setIsWritingReview(false);
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -326,8 +329,6 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     }
 
     try {
-      console.log('Attempting to delete review:', reviewId, 'for user:', user.id);
-      
       const response = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}`, {
         method: 'DELETE',
         headers: {
@@ -338,7 +339,6 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
       });
 
       const responseData = await response.json();
-      console.log('Delete response:', response.status, responseData);
 
       if (!response.ok) {
         throw new Error(responseData.error || 'Failed to delete review');

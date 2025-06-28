@@ -360,36 +360,25 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        console.log('Fetching restaurants...');
-        const response = await fetch('http://localhost:5000/api/restaurants');
-        if (!response.ok) {
-          throw new Error('Failed to fetch restaurants');
-        }
-        const data = await response.json();
-        console.log('Restaurant data with ratings:', data.map(r => ({
-          id: r.id,
-          name: r.name,
-          rating: r.average_rating,
-          reviews: r.review_count,
-          menu_items: r.menu_item_count
-        })));
-        setRestaurants(data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching restaurants:', err);
-        setError(err.message);
-        setLoading(false);
+  const fetchRestaurants = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/restaurants');
+      if (!response.ok) {
+        throw new Error('Failed to fetch restaurants');
       }
-    };
+      const data = await response.json();
+      setRestaurants(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching restaurants:', err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchRestaurants();
   }, []);
-
-  // Add debug log for restaurants state
-  console.log('Current restaurants state:', restaurants);
 
   return (
       <AuthProvider>
@@ -406,7 +395,7 @@ export default function App() {
               />
               <Route
                 path="/restaurant/:id"
-                element={<RestaurantDetails restaurants={restaurants || []} />}
+                element={<RestaurantDetails restaurants={restaurants || []} onRestaurantUpdate={fetchRestaurants} />}
               />
               <Route
                 path="/about"

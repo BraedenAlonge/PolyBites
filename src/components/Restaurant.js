@@ -3,9 +3,7 @@ import { Link } from "react-router-dom";
 import '../styles/Restaurant.css';
 import fullStar from '../assets/stars/star.png';
 
-export default function Restaurant({ data }) {
-  console.log('Restaurant component received data:', data);
-
+const Restaurant = React.memo(({ data }) => {
   // Use the data that's already available from the main API call
   const averageRating = data?.average_rating || 0;
   const reviewCount = data?.review_count || 0;
@@ -42,6 +40,7 @@ export default function Restaurant({ data }) {
           src={data.image || 'https://via.placeholder.com/400x300?text=No+Image'}
           alt={data.name || 'Restaurant'}
           className="w-full h-full object-cover"
+          loading="lazy"
         />
         <div className="absolute top-0 right-0 m-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
           {formattedRating}
@@ -69,5 +68,9 @@ export default function Restaurant({ data }) {
     </Link>
     
   );
-}
+});
+
+Restaurant.displayName = 'Restaurant';
+
+export default Restaurant;
 

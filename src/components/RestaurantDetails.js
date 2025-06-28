@@ -113,10 +113,10 @@ export default function RestaurantDetails({ restaurants }) {
   const getFoodIcon = (food_type) => {
     try {
       if (food_type) {
-        return require(`../assets/Icons/${food_type.toLowerCase()}.png`);
+        return require(`../assets/icons/${food_type.toLowerCase()}.png`);
       }
     } catch (e) {}
-    return require('../assets/Icons/food_default.png');
+    return require('../assets/icons/food_default.png');
   };
 
   if (!restaurant) {

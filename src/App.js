@@ -82,11 +82,11 @@ function HomePage({ restaurants, loading, error }) {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Memoize the sorting function
+  // Optimized sorting function with better performance
   const sortRestaurants = useCallback((restaurants, sortType) => {
-    if (!restaurants.length) return [];
+    if (!restaurants.length) return restaurants;
     
-    let sorted = [...restaurants];
+    const sorted = [...restaurants];
     
     switch (sortType) {
       case 'rating':
@@ -118,10 +118,10 @@ function HomePage({ restaurants, loading, error }) {
         });
         break;
       default:
-        // Default to reviews sorting
+        // Default to rating sorting
         sorted.sort((a, b) => {
-          const aRating = parseInt(a.average_rating) || 0;
-          const bRating = parseInt(b.average_rating) || 0;
+          const aRating = parseFloat(a.average_rating) || 0;
+          const bRating = parseFloat(b.average_rating) || 0;
           return bRating - aRating;
         });
     }
@@ -129,8 +129,10 @@ function HomePage({ restaurants, loading, error }) {
     return sorted;
   }, []);
 
-  // Memoize filtered and sorted restaurants
+  // Optimized memoization with better dependencies
   const processedRestaurants = useMemo(() => {
+    if (!restaurants.length) return [];
+    
     // First filter
     const filtered = debouncedSearchTerm.trim() === ''
       ? restaurants
@@ -142,20 +144,23 @@ function HomePage({ restaurants, loading, error }) {
     return sortRestaurants(filtered, sortBy);
   }, [debouncedSearchTerm, sortBy, restaurants, sortRestaurants]);
 
-  // Update filtered restaurants when processed results change
+  // Optimized effect to reduce re-renders
   useEffect(() => {
     setFilteredRestaurants(processedRestaurants);
     if (debouncedSearchTerm.trim() !== '') {
       setHasSearched(true);
       setDisplayedSearchTerm(debouncedSearchTerm);
+    } else {
+      setHasSearched(false);
+      setDisplayedSearchTerm('');
     }
   }, [processedRestaurants, debouncedSearchTerm]);
 
+  // Optimized animation effect
   useEffect(() => {
-    // Sequentially show each line
     const timers = [
-      setTimeout(() => setSubtitleVisible(v => [true, false, false]), 800),
-      setTimeout(() => setSubtitleVisible(v => [true, true, false]), 1600),
+      setTimeout(() => setSubtitleVisible([true, false, false]), 800),
+      setTimeout(() => setSubtitleVisible([true, true, false]), 1600),
       setTimeout(() => setSubtitleVisible([true, true, true]), 2400),
     ];
     return () => timers.forEach(clearTimeout);
@@ -195,6 +200,8 @@ function HomePage({ restaurants, loading, error }) {
           alt="Food background"
           className="absolute inset-0 w-full h-full object-cover opacity-85 pointer-events-none select-none"
           style={{ zIndex: 0, minHeight: 600 }}
+          loading="lazy"
+          decoding="async"
         />
         {/* Overlay for better blending */}
         <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1, paddingTop: 0}}></div>

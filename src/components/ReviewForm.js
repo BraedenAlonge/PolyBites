@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Filter } from 'bad-words';
 import fullStar from '../assets/stars/star.png';
 import halfStar from '../assets/stars/half_star.png';
 import emptyStar from '../assets/stars/empty_star.png';
@@ -10,6 +11,7 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
   const [reviewText, setReviewText] = useState('');
   const [anonymous, setAnonymous] = useState(false);
   const { user } = useAuth();
+  const filter = new Filter();
 
   const handleStarClick = (value) => {
     setRating(value);
@@ -119,6 +121,13 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Check for profanity in review text
+    if (filter.isProfane(reviewText)) {
+      alert('Your review contains inappropriate language. Please revise your review and try again.');
+      return;
+    }
+    
     onSubmit({
       user_id: user.id,
       food_id: foodItem.id,

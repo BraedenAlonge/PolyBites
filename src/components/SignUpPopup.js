@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { Filter } from 'bad-words'
 
 export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
   const popupRef = useRef(null);
+  const filter = new Filter();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -57,6 +59,12 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check for profanity in username
+    if (filter.isProfane(formData.fullName)) {
+      alert('Name contains inappropriate language. Please choose a different name.');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       alert('Passwords do not match!');

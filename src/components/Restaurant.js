@@ -1,78 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import '../styles/Restaurant.css';
 import fullStar from '../assets/stars/star.png';
 
-//function to fetch foods from a restaurnat and count the number of items
-const fetchNumberOfFoods = async (restaurantId) => {
-  const response = await fetch(`http://localhost:5000/api/foods/restaurant/${restaurantId}`);
-  const data = await response.json();
-  return data.length;
-};
-
-const fetchFoodReviewDetails = async () => {
-  try {
-    const response = await fetch('http://localhost:5000/api/food-reviews/food-review-details');
-    if (!response.ok) {
-      throw new Error('Failed to fetch review details');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching review details:', error);
-    return [];
-  }
-};
-
 export default function Restaurant({ data }) {
   console.log('Restaurant component received data:', data);
 
-  const [menuItemCount, setMenuItemCount] = useState(0);
-  const [reviewDetails, setReviewDetails] = useState({
-    review_count: 0,
-    average_rating: 0
-  });
-
-  useEffect(() => {
-    const getMenuItemCount = async () => {
-      if (!data?.id || data?.menuItems) return;
-      try {
-        const count = await fetchNumberOfFoods(data.id);
-        setMenuItemCount(count);
-      } catch (error) {
-        console.error('Error fetching menu items count:', error);
-        setMenuItemCount(0);
-      }
-    };
-
-    getMenuItemCount();
-  }, [data?.id, data?.menuItems]);
-
-  useEffect(() => {
-    const getReviewDetails = async () => {
-      if (!data?.id) return;
-      
-      try {
-        const allDetails = await fetchFoodReviewDetails();
-        const restaurantDetails = allDetails.find(detail => detail.restaurant_id === data?.id) || {
-          review_count: 0,
-          average_rating: 0
-        };
-        setReviewDetails(restaurantDetails);
-      } catch (error) {
-        console.error('Error fetching review details:', error);
-        setReviewDetails({
-          review_count: 0,
-          average_rating: 0
-        });
-      }
-    };
-
-    getReviewDetails();
-  }, [data?.id]);
-
-  // Format the average rating to one decimal place
-
-  const formattedRating = Number(reviewDetails?.average_rating || 0).toFixed(1);
+  // Use the data that's already available from the main API call
+  const averageRating = data?.average_rating || 0;
+  const reviewCount = data?.review_count || 0;
+  const menuItemCount = data?.menu_item_count || 0;
+  const formattedRating = Number(averageRating).toFixed(1);
 
   // Return early with loading state if data is not yet available
   if (!data) {
@@ -124,10 +62,8 @@ export default function Restaurant({ data }) {
         )}
 
         <div className="mt-auto space-y-1">
-          {!data.menuItems && (
-            <p className="text-gray-500 text-sm"><strong>{menuItemCount}</strong> menu items</p>
-          )}
-          <p className="text-gray-500 text-sm"><strong>{reviewDetails.review_count}</strong> reviews</p>
+          <p className="text-gray-500 text-sm"><strong>{menuItemCount}</strong> menu items</p>
+          <p className="text-gray-500 text-sm"><strong>{reviewCount}</strong> reviews</p>
         </div>
       </div>
     </Link>

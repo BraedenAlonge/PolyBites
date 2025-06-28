@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Filter } from 'bad-words';
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -13,7 +14,8 @@ export default function ProfilePage() {
     name: '',
     email: ''
   });
-
+  const filter = new Filter();
+  
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -49,6 +51,12 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (filter.isProfane(formData.name)) {
+      alert('Your name contains inappropriate language. Please revise your name and try again.');
+      return;
+    }
+
     try {
       const requestBody = {
         name: formData.name

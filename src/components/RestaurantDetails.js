@@ -12,10 +12,10 @@ export default function RestaurantDetails({ restaurants }) {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [averageRating, setAverageRating] = useState(0);
   const pageRef = useRef(null);
   
   const restaurant = restaurants?.find(r => r.id === parseInt(id));
+  const averageRating = restaurant?.average_rating || 0;
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -33,25 +33,8 @@ export default function RestaurantDetails({ restaurants }) {
       }
     };
 
-    const fetchRestaurantRating = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/api/food-reviews/food-review-details`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch ratings');
-        }
-        const data = await response.json();
-        const restaurantRating = data.find(r => r.restaurant_id === parseInt(id));
-        setAverageRating(restaurantRating?.average_rating || 0);
-        console.log('Fetched reviews:', data);
-      } catch (err) {
-        console.error('Error fetching restaurant rating:', err);
-        setAverageRating(0);
-      }
-    };
-
     if (id) {
       fetchMenuItems();
-      fetchRestaurantRating();
     }
   }, [id]);
 

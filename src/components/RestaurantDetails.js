@@ -113,10 +113,10 @@ export default function RestaurantDetails({ restaurants }) {
   const getFoodIcon = (food_type) => {
     try {
       if (food_type) {
-        return require(`../assets/icons/${food_type.toLowerCase()}.png`);
+        return require(`../assets/Icons/${food_type.toLowerCase()}.png`);
       }
     } catch (e) {}
-    return require('../assets/icons/food_default.png');
+    return require('../assets/Icons/food_default.png');
   };
 
   if (!restaurant) {
@@ -235,7 +235,7 @@ export default function RestaurantDetails({ restaurants }) {
         />
       </div>
       <footer className="text-center text-xs text-gray-400 py-4 bg-green-50 mt-8">
-        <a href="https://www.flaticon.com/free-icons/burger" title="burger icons" target="_blank" rel="noopener noreferrer">
+        <a href="https://www.flaticon.com/" title="default food icons" target="_blank" rel="noopener noreferrer">
           Default icons created by Freepik - Flaticon
         </a>
       </footer>

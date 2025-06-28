@@ -43,6 +43,8 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const [likeLoading, setLikeLoading] = useState(new Set()); // Track which reviews are being processed
   const [sortBy, setSortBy] = useState('likes'); // Sort by likes (default) or recent
 
+  const [currentFoodId, setCurrentFoodId] = useState(null);
+
   const handleCloseSignIn = () => {
     setShowSignIn(false);
   };
@@ -96,6 +98,12 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   };
 
   useEffect(() => {
+    if (isOpen && foodItem?.id) {
+      setLoading(true);
+      setReviews([]);
+      setError(null);
+      setCurrentFoodId(foodItem.id); // Track the current food being loaded
+    }
     const fetchReviews = async () => {
       if (!foodItem?.id) return;
       
@@ -203,6 +211,18 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
 
   if (!isOpen || !foodItem) return null;
 
+  // Show loading if loading, or if the loaded food is not the current food
+  if (loading || foodItem.id !== currentFoodId) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg p-8 flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmitReview = async (reviewData) => {
     try {
       const response = await fetch('http://localhost:5000/api/food-reviews', {
@@ -250,10 +270,10 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const getFoodIcon = (food_type) => {
     try {
       if (food_type) {
-        return require(`../assets/icons/${food_type.toLowerCase()}.png`);
+        return require(`../assets/Icons/${food_type.toLowerCase()}.png`);
       }
     } catch (e) {}
-    return require('../assets/icons/food_default.png');
+    return require('../assets/Icons/food_default.png');
   };
 
   // Render stars with half-star support for review ratings

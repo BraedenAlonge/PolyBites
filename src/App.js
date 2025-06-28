@@ -12,6 +12,8 @@ import Navbar from "./components/Navbar";
 import "./styles/App.css"
 import AboutPage from './components/AboutPage';
 import ProfilePage from './components/ProfilePage';
+import FAQsPage from './components/FAQsPage';
+import TermsPage from './components/TermsPage';
 
 function Layout({ children }) {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
@@ -57,11 +59,19 @@ function HomePage({ restaurants, loading, error }) {
   const [filteredRestaurants, setFilteredRestaurants] = useState(restaurants);
   const [hasSearched, setHasSearched] = useState(false);
   const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('rating');
+  const [sortBy, setSortBy] = useState(() => {
+    // Initialize from localStorage or default to 'rating'
+    return localStorage.getItem('polybites-sort-by') || 'rating';
+  });
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   // Animation state for subtitle lines
   const [subtitleVisible, setSubtitleVisible] = useState([false, false, false]);
+
+  // Save sort preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('polybites-sort-by', sortBy);
+  }, [sortBy]);
 
   // Debounce search term
   useEffect(() => {
@@ -398,6 +408,14 @@ export default function App() {
               <Route
                 path="/profile"
                 element={<ProfilePage />}
+              />
+              <Route
+                path="/faqs"
+                element={<FAQsPage />}
+              />
+              <Route
+                path="/terms"
+                element={<TermsPage />}
               />
             </Routes>
           </Layout>

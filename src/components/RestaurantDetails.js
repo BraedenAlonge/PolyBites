@@ -12,10 +12,11 @@ export default function RestaurantDetails({ restaurants }) {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [averageRating, setAverageRating] = useState(0);
+  const [foodRatings, setFoodRatings] = useState({});
   const pageRef = useRef(null);
   
   const restaurant = restaurants?.find(r => r.id === parseInt(id));
+  const averageRating = restaurant?.average_rating || 0;
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -26,6 +27,29 @@ export default function RestaurantDetails({ restaurants }) {
         }
         const data = await response.json();
         setMenuItems(data);
+        
+        // Fetch ratings for all food items
+        const ratingsPromises = data.map(async (food) => {
+          try {
+            const ratingResponse = await fetch(`http://localhost:5000/api/food-reviews/food/${food.id}/stats`);
+            if (ratingResponse.ok) {
+              const ratingData = await ratingResponse.json();
+              return { foodId: food.id, ...ratingData };
+            }
+            return { foodId: food.id, review_count: 0, average_rating: 0 };
+          } catch (err) {
+            console.error('Error fetching rating for food:', food.id, err);
+            return { foodId: food.id, review_count: 0, average_rating: 0 };
+          }
+        });
+        
+        const ratingsResults = await Promise.all(ratingsPromises);
+        const ratingsMap = {};
+        ratingsResults.forEach(({ foodId, review_count, average_rating }) => {
+          ratingsMap[foodId] = { review_count, average_rating };
+        });
+        setFoodRatings(ratingsMap);
+        
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -33,25 +57,8 @@ export default function RestaurantDetails({ restaurants }) {
       }
     };
 
-    const fetchRestaurantRating = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/api/food-reviews/food-review-details`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch ratings');
-        }
-        const data = await response.json();
-        const restaurantRating = data.find(r => r.restaurant_id === parseInt(id));
-        setAverageRating(restaurantRating?.average_rating || 0);
-        console.log('Fetched reviews:', data);
-      } catch (err) {
-        console.error('Error fetching restaurant rating:', err);
-        setAverageRating(0);
-      }
-    };
-
     if (id) {
       fetchMenuItems();
-      fetchRestaurantRating();
     }
   }, [id]);
 
@@ -177,30 +184,42 @@ export default function RestaurantDetails({ restaurants }) {
               <div className="mt-8">
                 <h3 className="text-xl font-semibold text-gray-800 mb-4">Menu Items</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {menuItems.map((item) => (
-                    <div
-                      key={item.id}
-                      onClick={() => setSelectedFood(item)}
-                      className="menu-item group cursor-pointer bg-gray-50 rounded-lg p-4 hover:bg-green-50 transition-colors"
-                    >
-                      <div className="relative h-48 mb-3 overflow-hidden rounded">
-                        <img
-                          src={getFoodIcon(item.food_type)}
-                          alt={item.name}
-                          className="w-4/5 h-4/5 object-contain mx-auto my-auto group-hover:scale-105 transition-transform"
-                        />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-                          <p className="text-white text-lg font-medium">${item.price}</p>
+                  {menuItems.map((item) => {
+                    const foodRating = foodRatings[item.id] || { review_count: 0, average_rating: 0 };
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => setSelectedFood(item)}
+                        className="menu-item group cursor-pointer bg-gray-50 rounded-lg p-4 hover:bg-green-50 transition-colors"
+                      >
+                        <div className="relative h-48 mb-3 overflow-hidden rounded">
+                          <img
+                            src={getFoodIcon(item.food_type)}
+                            alt={item.name}
+                            className="w-4/5 h-4/5 object-contain mx-auto my-auto group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
+                            <p className="text-white text-lg font-medium">${item.price}</p>
+                          </div>
+                          {/* Food Rating Badge - Same style as restaurant cards */}
+                          <div className="absolute top-0 right-0 m-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                            {Number(foodRating.average_rating).toFixed(1)}
+                            <img src={fullStar} alt="star" className="w-4 h-4 inline" />
+                          </div>
+                        </div>
+                        <h4 className="text-lg font-medium text-gray-800 mb-2">
+                          {item.name}
+                        </h4>
+                        <p className="text-gray-600 text-sm mb-3">
+                          {item.description}
+                        </p>
+                        {/* Review count display */}
+                        <div className="text-gray-500 text-sm">
+                          <strong>{foodRating.review_count}</strong> reviews
                         </div>
                       </div>
-                      <h4 className="text-lg font-medium text-gray-800 mb-2">
-                        {item.name}
-                      </h4>
-                      <p className="text-gray-600 text-sm">
-                        {item.description}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : (

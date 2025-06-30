@@ -21,10 +21,26 @@ export default function Navbar({ onSignInOpen, onSignUpOpen }) {
           <div className="flex items-center space-x-2 pr-2">
             <Link
               to="/about"
-              className="bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-white/30 transition-colors"
+              className="text-white px-4 py-1.5 rounded-full text-sm font-medium hover:text-green-100 transition-colors"
               style={{marginRight: 10}}
               >
               About
+            </Link>
+
+            <Link
+              to="/terms"
+              className="text-white px-4 py-1.5 rounded-full text-sm font-medium hover:text-green-100 transition-colors"
+              style={{marginRight: 10}}
+              >
+              Terms
+            </Link>
+
+            <Link
+              to="/faqs"
+              className="text-white px-4 py-1.5 rounded-full text-sm font-medium hover:text-green-100 transition-colors"
+              style={{marginRight: 10}}
+              >
+              FAQs
             </Link>
         
             <Link
@@ -46,27 +62,44 @@ export default function Navbar({ onSignInOpen, onSignUpOpen }) {
         ) : (
           <div className="flex items-center space-x-2 pr-2">
               <Link
-                to="/about"
-                className="bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-white/30 transition-colors"
-                style={{marginRight: 10}}
-                >
-                About
-              </Link>   
-              <button
-                onClick={onSignInOpen}
-                className="bg-black text-white-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-black-50 transition-colors"
-                style={{marginRight: 10}}
+              to="/about"
+              className="text-white px-4 py-1.5 rounded-full text-sm font-medium hover:text-green-100 transition-colors"
+              style={{marginRight: 10}}
               >
-                Sign In
-              </button>
+              About
+            </Link>
 
-              <button
-                onClick={onSignUpOpen}
-                className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
-                style={{marginRight: 10}}
+            <Link
+              to="/terms"
+              className="text-white px-4 py-1.5 rounded-full text-sm font-medium hover:text-green-100 transition-colors"
+              style={{marginRight: 10}}
               >
-                Sign Up
-              </button>
+              Terms
+            </Link>
+
+            <Link
+              to="/faqs"
+              className="text-white px-4 py-1.5 rounded-full text-sm font-medium hover:text-green-100 transition-colors"
+              style={{marginRight: 10}}
+              >
+              FAQs
+            </Link>
+            
+            <button
+              onClick={onSignInOpen}
+              className="bg-black text-white-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-black-50 transition-colors"
+              style={{marginRight: 10}}
+            >
+              Sign In
+            </button>
+
+            <button
+              onClick={onSignUpOpen}
+              className="bg-white text-green-600 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-green-50 transition-colors"
+              style={{marginRight: 10}}
+            >
+              Sign Up
+            </button>
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Filter } from 'bad-words';
 import fullStar from '../assets/stars/star.png';
 import halfStar from '../assets/stars/half_star.png';
 import emptyStar from '../assets/stars/empty_star.png';
@@ -9,7 +10,9 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
   const [hoverRating, setHoverRating] = useState(null);
   const [reviewText, setReviewText] = useState('');
   const [anonymous, setAnonymous] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
+  const filter = new Filter();
 
   const handleStarClick = (value) => {
     setRating(value);
@@ -117,18 +120,36 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
     return stars;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit({
-      user_id: user.id,
-      food_id: foodItem.id,
-      rating,
-      text: reviewText,
-      anonymous
-    });
-    setRating(5);
-    setReviewText('');
-    setAnonymous(false);
+    
+    // Check for profanity in review text
+    if (filter.isProfane(reviewText)) {
+      alert('Your review contains inappropriate language. Please revise your review and try again.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      await onSubmit({
+        user_id: user.id,
+        food_id: foodItem.id,
+        rating,
+        text: reviewText,
+        anonymous
+      });
+      
+      // Reset form only on successful submission
+      setRating(5);
+      setReviewText('');
+      setAnonymous(false);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      // Don't reset form on error, let user try again
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -168,6 +189,7 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
             rows="4"
             placeholder="Share your thoughts about this dish..."
             required
+            disabled={isSubmitting}
           />
         </div>
 
@@ -178,6 +200,7 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
               checked={anonymous}
               onChange={e => setAnonymous(e.target.checked)}
               className="form-checkbox h-5 w-5 text-green-600"
+              disabled={isSubmitting}
             />
             <span className="ml-2 text-gray-700">Post as Anonymous</span>
           </label>
@@ -188,14 +211,20 @@ export default function ReviewForm({ foodItem, onSubmit, onCancel }) {
             type="button"
             onClick={onCancel}
             className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className={`px-4 py-2 rounded-lg transition-colors ${
+              isSubmitting 
+                ? 'bg-gray-400 text-white cursor-not-allowed' 
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
+            disabled={isSubmitting}
           >
-            Submit Review
+            {isSubmitting ? "Submitting review..." : "Submit Review"}
           </button>
         </div>
       </form>

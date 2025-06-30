@@ -1,17 +1,12 @@
 import express from 'express';
-import { getFoodReviews, getFoodReviewById, createFoodReview, getFoodReviewsByFoodId, getFoodReviewsByRestaurantId, getFoodReviewDetails, getFoodReviewStats, deleteFoodReview, getLike, toggleLike, getReviewLikes } from '../controllers/foodReviewController.js';
+import { getFoodReviews, getFoodReviewById, createFoodReview, getFoodReviewsByFoodId, getFoodReviewsByRestaurantId, getFoodReviewDetails, getFoodReviewStats, getFoodReviewStatsByRestaurant, deleteFoodReview, getLike, toggleLike, getReviewLikes } from '../controllers/foodReviewController.js';
 
 const router = express.Router();
-
-// Debug middleware to log all requests
-router.use((req, res, next) => {
-  console.log('Food Reviews Route:', req.method, req.path, req.params, req.query);
-  next();
-});
 
 // More specific routes first
 router.get('/food-review-details', getFoodReviewDetails);
 router.get('/food/:foodId/stats', getFoodReviewStats);
+router.get('/restaurant/:restaurantId/stats', getFoodReviewStatsByRestaurant);
 router.get('/food/:foodId', getFoodReviewsByFoodId);
 router.get('/restaurant/:restaurantId', getFoodReviewsByRestaurantId);
 

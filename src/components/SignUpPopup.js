@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { Filter } from 'bad-words'
 
 export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
   const popupRef = useRef(null);
+  const filter = new Filter();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -43,12 +45,13 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
         }),
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        const profileData = await response.json();
+        return profileData;
+      } else {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create profile');
       }
-
-      return await response.json();
     } catch (error) {
       console.error('Error creating profile:', error);
       throw error;
@@ -57,6 +60,12 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check for profanity in username
+    if (filter.isProfane(formData.fullName)) {
+      alert('Name contains inappropriate language. Please choose a different name.');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       alert('Passwords do not match!');
@@ -83,8 +92,7 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
 
       // 2. Create profile in our database
       try {
-        await createProfile(authData.user.id);
-        console.log('Profile created successfully');
+        const profileData = await createProfile(authData.user.id);
         alert('Signup successful! Please verify your email.');
         onClose();
       } catch (profileError) {

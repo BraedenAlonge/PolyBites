@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ReviewForm from './ReviewForm';
 import { useAuth } from '../context/AuthContext';
 import SignInPopup from './SignInPopup';
@@ -17,6 +17,9 @@ const ANONYMOUS_NAMES = [
   "Agent Appétit"
 ];
 
+// Global cache for user names to avoid repeated API calls
+const userNameCache = new Map();
+
 function getRandomAnonymousName(seed) {
   // Use a deterministic seed (e.g., review id) so the name doesn't change on rerender
   if (typeof seed === 'number') {
@@ -26,7 +29,7 @@ function getRandomAnonymousName(seed) {
   return ANONYMOUS_NAMES[0];
 }
 
-export default function FoodDetails({ isOpen, onClose, foodItem }) {
+export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpdate }) {
   const [isWritingReview, setIsWritingReview] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,25 +80,52 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   return lastName ? `${firstName} ${lastName[0]}.` : firstName;
   }
 
-  const fetchUserName = async (userId) => {
+  // Optimized user name fetching with caching
+  const fetchUserName = useCallback(async (userId) => {
+    // Check cache first
+    if (userNameCache.has(userId)) {
+      setUserNames(prev => ({
+        ...prev,
+        [userId]: userNameCache.get(userId)
+      }));
+      return;
+    }
+
     try {
       const response = await fetch(`http://localhost:5000/api/profiles/auth/${userId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch profile');
       }
       const userData = await response.json();
+      const userName = userData.name;
+      
+      // Cache the result
+      userNameCache.set(userId, userName);
+      
       setUserNames(prev => ({
         ...prev,
-        [userId]: userData.name
+        [userId]: userName
       }));
     } catch (err) {
       console.error('Error fetching profile:', err);
+      const fallbackName = 'User #' + userId;
+      userNameCache.set(userId, fallbackName);
       setUserNames(prev => ({
         ...prev,
-        [userId]: 'User #' + userId
+        [userId]: fallbackName
       }));
     }
-  };
+  }, []);
+
+  // Batch fetch user names for all reviews
+  const fetchUserNamesBatch = useCallback(async (reviewsData) => {
+    const uniqueUserIds = [...new Set(reviewsData.map(review => review.user_id))];
+    const uncachedUserIds = uniqueUserIds.filter(userId => !userNameCache.has(userId));
+    
+    // Fetch only uncached user names
+    const promises = uncachedUserIds.map(userId => fetchUserName(userId));
+    await Promise.all(promises);
+  }, [fetchUserName]);
 
   useEffect(() => {
     if (isOpen && foodItem?.id) {
@@ -118,8 +148,6 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
           fetch(`http://localhost:5000/api/food-reviews/food/${foodItem.id}/stats`)
         ]);
 
-        console.log('Reviews URL:', `http://localhost:5000/api/food-reviews/food/${foodItem.id}`);
-
         if (!reviewsResponse.ok) {
           const errorText = await reviewsResponse.text();
           console.error('Reviews response error:', reviewsResponse.status, errorText);
@@ -135,12 +163,15 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
           statsResponse.json()
         ]);
 
-        // Fetch like counts for all reviews
-        const likeCountsMap = new Map();
-        const userLikesSet = new Set();
+        setReviews(reviewsData);
+        setReviewStats(statsData);
         
+        // Fetch user names in batch
+        await fetchUserNamesBatch(reviewsData);
+        
+        // Only fetch like data if there are reviews
         if (reviewsData.length > 0) {
-          // Get like counts for all reviews
+          // Batch fetch like counts for all reviews
           const likeCountsPromises = reviewsData.map(async (review) => {
             try {
               const likeResponse = await fetch(`http://localhost:5000/api/food-reviews/${review.id}/likes`);
@@ -156,11 +187,13 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
           });
 
           const likeCountsResults = await Promise.all(likeCountsPromises);
+          const likeCountsMap = new Map();
           likeCountsResults.forEach(({ reviewId, count }) => {
             likeCountsMap.set(reviewId, count);
           });
+          setLikeCounts(likeCountsMap);
 
-          // If user is logged in, get their like status for each review
+          // If user is logged in, batch fetch their like status for all reviews
           if (user) {
             const userLikesPromises = reviewsData.map(async (review) => {
               try {
@@ -177,24 +210,15 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
             });
 
             const userLikesResults = await Promise.all(userLikesPromises);
+            const userLikesSet = new Set();
             userLikesResults.forEach(({ reviewId, liked }) => {
               if (liked) {
                 userLikesSet.add(reviewId);
               }
             });
+            setUserLikes(userLikesSet);
           }
         }
-
-        setLikeCounts(likeCountsMap);
-        setUserLikes(userLikesSet);
-        setReviews(reviewsData);
-        setReviewStats(statsData);
-        
-        // Fetch user names for each review
-        const uniqueUserIds = [...new Set(reviewsData.map(review => review.user_id))];
-        uniqueUserIds.forEach(userId => {
-          fetchUserName(userId);
-        });
         
         setLoading(false);
       } catch (err) {
@@ -207,7 +231,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     if (isOpen) {
       fetchReviews();
     }
-  }, [isOpen, foodItem?.id, user]);
+  }, [isOpen, foodItem?.id, user, fetchUserNamesBatch]);
 
   if (!isOpen || !foodItem) return null;
 
@@ -259,6 +283,11 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
         }
       }
 
+      // Update restaurant ratings on homepage
+      if (onRestaurantUpdate) {
+        onRestaurantUpdate();
+      }
+
       setIsWritingReview(false);
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -270,10 +299,10 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
   const getFoodIcon = (food_type) => {
     try {
       if (food_type) {
-        return require(`../assets/Icons/${food_type.toLowerCase()}.png`);
+        return require(`../assets/icons/${food_type.toLowerCase()}.png`);
       }
     } catch (e) {}
-    return require('../assets/Icons/food_default.png');
+    return require('../assets/icons/food_default.png');
   };
 
   // Render stars with half-star support for review ratings
@@ -300,8 +329,6 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
     }
 
     try {
-      console.log('Attempting to delete review:', reviewId, 'for user:', user.id);
-      
       const response = await fetch(`http://localhost:5000/api/food-reviews/${reviewId}`, {
         method: 'DELETE',
         headers: {
@@ -312,7 +339,6 @@ export default function FoodDetails({ isOpen, onClose, foodItem }) {
       });
 
       const responseData = await response.json();
-      console.log('Delete response:', response.status, responseData);
 
       if (!response.ok) {
         throw new Error(responseData.error || 'Failed to delete review');

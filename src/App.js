@@ -12,6 +12,8 @@ import Navbar from "./components/Navbar";
 import "./styles/App.css"
 import AboutPage from './components/AboutPage';
 import ProfilePage from './components/ProfilePage';
+import FAQsPage from './components/FAQsPage';
+import TermsPage from './components/TermsPage';
 
 function Layout({ children }) {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
@@ -57,11 +59,19 @@ function HomePage({ restaurants, loading, error }) {
   const [filteredRestaurants, setFilteredRestaurants] = useState(restaurants);
   const [hasSearched, setHasSearched] = useState(false);
   const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('rating');
+  const [sortBy, setSortBy] = useState(() => {
+    // Initialize from localStorage or default to 'rating'
+    return localStorage.getItem('polybites-sort-by') || 'rating';
+  });
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   // Animation state for subtitle lines
   const [subtitleVisible, setSubtitleVisible] = useState([false, false, false]);
+
+  // Save sort preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('polybites-sort-by', sortBy);
+  }, [sortBy]);
 
   // Debounce search term
   useEffect(() => {
@@ -72,11 +82,11 @@ function HomePage({ restaurants, loading, error }) {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Memoize the sorting function
+  // Optimized sorting function with better performance
   const sortRestaurants = useCallback((restaurants, sortType) => {
-    if (!restaurants.length) return [];
+    if (!restaurants.length) return restaurants;
     
-    let sorted = [...restaurants];
+    const sorted = [...restaurants];
     
     switch (sortType) {
       case 'rating':
@@ -108,10 +118,10 @@ function HomePage({ restaurants, loading, error }) {
         });
         break;
       default:
-        // Default to reviews sorting
+        // Default to rating sorting
         sorted.sort((a, b) => {
-          const aRating = parseInt(a.average_rating) || 0;
-          const bRating = parseInt(b.average_rating) || 0;
+          const aRating = parseFloat(a.average_rating) || 0;
+          const bRating = parseFloat(b.average_rating) || 0;
           return bRating - aRating;
         });
     }
@@ -119,8 +129,10 @@ function HomePage({ restaurants, loading, error }) {
     return sorted;
   }, []);
 
-  // Memoize filtered and sorted restaurants
+  // Optimized memoization with better dependencies
   const processedRestaurants = useMemo(() => {
+    if (!restaurants.length) return [];
+    
     // First filter
     const filtered = debouncedSearchTerm.trim() === ''
       ? restaurants
@@ -132,20 +144,23 @@ function HomePage({ restaurants, loading, error }) {
     return sortRestaurants(filtered, sortBy);
   }, [debouncedSearchTerm, sortBy, restaurants, sortRestaurants]);
 
-  // Update filtered restaurants when processed results change
+  // Optimized effect to reduce re-renders
   useEffect(() => {
     setFilteredRestaurants(processedRestaurants);
     if (debouncedSearchTerm.trim() !== '') {
       setHasSearched(true);
       setDisplayedSearchTerm(debouncedSearchTerm);
+    } else {
+      setHasSearched(false);
+      setDisplayedSearchTerm('');
     }
   }, [processedRestaurants, debouncedSearchTerm]);
 
+  // Optimized animation effect
   useEffect(() => {
-    // Sequentially show each line
     const timers = [
-      setTimeout(() => setSubtitleVisible(v => [true, false, false]), 800),
-      setTimeout(() => setSubtitleVisible(v => [true, true, false]), 1600),
+      setTimeout(() => setSubtitleVisible([true, false, false]), 800),
+      setTimeout(() => setSubtitleVisible([true, true, false]), 1600),
       setTimeout(() => setSubtitleVisible([true, true, true]), 2400),
     ];
     return () => timers.forEach(clearTimeout);
@@ -185,6 +200,8 @@ function HomePage({ restaurants, loading, error }) {
           alt="Food background"
           className="absolute inset-0 w-full h-full object-cover opacity-85 pointer-events-none select-none"
           style={{ zIndex: 0, minHeight: 600 }}
+          loading="lazy"
+          decoding="async"
         />
         {/* Overlay for better blending */}
         <div className="absolute inset-0 bg-gradient-to-b from-green-700/80 to-green-500/80" style={{ zIndex: 1, paddingTop: 0}}></div>
@@ -343,36 +360,25 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        console.log('Fetching restaurants...');
-        const response = await fetch('http://localhost:5000/api/restaurants');
-        if (!response.ok) {
-          throw new Error('Failed to fetch restaurants');
-        }
-        const data = await response.json();
-        console.log('Restaurant data with ratings:', data.map(r => ({
-          id: r.id,
-          name: r.name,
-          rating: r.average_rating,
-          reviews: r.review_count,
-          menu_items: r.menu_item_count
-        })));
-        setRestaurants(data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching restaurants:', err);
-        setError(err.message);
-        setLoading(false);
+  const fetchRestaurants = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/restaurants');
+      if (!response.ok) {
+        throw new Error('Failed to fetch restaurants');
       }
-    };
+      const data = await response.json();
+      setRestaurants(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching restaurants:', err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchRestaurants();
   }, []);
-
-  // Add debug log for restaurants state
-  console.log('Current restaurants state:', restaurants);
 
   return (
       <AuthProvider>
@@ -389,7 +395,7 @@ export default function App() {
               />
               <Route
                 path="/restaurant/:id"
-                element={<RestaurantDetails restaurants={restaurants || []} />}
+                element={<RestaurantDetails restaurants={restaurants || []} onRestaurantUpdate={fetchRestaurants} />}
               />
               <Route
                 path="/about"
@@ -398,6 +404,14 @@ export default function App() {
               <Route
                 path="/profile"
                 element={<ProfilePage />}
+              />
+              <Route
+                path="/faqs"
+                element={<FAQsPage />}
+              />
+              <Route
+                path="/terms"
+                element={<TermsPage />}
               />
             </Routes>
           </Layout>

@@ -25,7 +25,7 @@ export default function FAQsPage() {
     },
     {
       question: "Can I edit or delete my reviews?",
-      answer: "Currently, reviews cannot be edited after submission. If you need to remove a review, please contact our support team."
+      answer: "Currently, reviews cannot be edited after submission. If you need to remove a review, simply click the red trash can button next to your posted comment and confirm your deletion."
     },
     {
       question: "How are restaurant ratings calculated?",

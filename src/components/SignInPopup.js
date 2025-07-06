@@ -7,7 +7,7 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
     emailOrPhone: '',
     password: ''
   });
-
+  const [error, setError] = useState('');
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -35,10 +35,12 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
       });
 
       if (error) {
-        return;
+        setError('Incorrect email or password');
+      } else {
+        setError('');
+        onClose();  // Close popup
+        window.location.reload(); // Refresh page after sign in
       }
-
-      onClose();  // Close popup
     } catch (err) {
       console.error('Unexpected error:', err);
     }
@@ -49,6 +51,7 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
       ...formData,
       [e.target.name]: e.target.value
     });
+    setError(''); // Clear error on input change
   };
 
   if (!isOpen) return null;
@@ -71,6 +74,11 @@ export default function SignInPopup({ isOpen, onClose, onSwitchToSignUp }) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="text-red-600 text-center mb-2">
+              {error}
+            </div>
+          )}
           <div>
             <label htmlFor="emailOrPhone" className="block text-sm font-medium text-gray-700 mb-1">
               Email

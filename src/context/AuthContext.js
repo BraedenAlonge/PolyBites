@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    window.location.reload(); // Refresh page after logout
   };
 
   return (

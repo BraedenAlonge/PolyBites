@@ -18,6 +18,24 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
   const restaurant = restaurants?.find(r => r.id === parseInt(id));
   const averageRating = restaurant?.average_rating || 0;
 
+  // Function to refresh restaurant data
+  const refreshRestaurantData = async () => {
+    if (onRestaurantUpdate) {
+      await onRestaurantUpdate();
+    }
+    
+    // Also refresh food ratings for this restaurant
+    try {
+      const ratingsResponse = await fetch(`http://localhost:5000/api/food-reviews/restaurant/${id}/stats`);
+      if (ratingsResponse.ok) {
+        const ratingsData = await ratingsResponse.json();
+        setFoodRatings(ratingsData);
+      }
+    } catch (err) {
+      console.error('Error refreshing food ratings:', err);
+    }
+  };
+
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
@@ -231,7 +249,7 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
           isOpen={!!selectedFood}
           onClose={() => setSelectedFood(null)}
           foodItem={selectedFood}
-          onRestaurantUpdate={onRestaurantUpdate}
+          onRestaurantUpdate={refreshRestaurantData}
         />
       </div>
       <footer className="text-center text-xs text-gray-400 py-4 bg-green-50 mt-8">

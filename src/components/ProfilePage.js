@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Filter } from 'bad-words';
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,6 +14,9 @@ export default function ProfilePage() {
     name: '',
     email: ''
   });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const filter = new Filter();
   
   useEffect(() => {
@@ -64,7 +67,7 @@ export default function ProfilePage() {
         name: formData.name
       };
 
-      const response = await fetch(`http://localhost:5000/api/profiles/${user.id}`, {
+      const response = await fetch(`http://localhost:5000/api/profiles/auth/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -75,6 +78,7 @@ export default function ProfilePage() {
       if (response.ok) {
         const updatedProfile = await response.json();
         setProfile(updatedProfile);
+        setIsEditing(false); // Exit edit mode after successful update
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Failed to update profile');
@@ -90,6 +94,45 @@ export default function ProfilePage() {
       ...formData,
       [e.target.name]: e.target.value
     });
+    setError('');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== profile?.name) {
+      setError('Please type your full name exactly as shown to confirm deletion.');
+      return;
+    }
+
+    setIsDeleting(true);
+    setError('');
+
+    try {
+      console.log('Attempting to delete account for user:', user.id);
+      const response = await fetch(`http://localhost:5000/api/profiles/auth/${user.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: user.id }),
+      });
+
+      console.log('Delete response status:', response.status);
+      
+      if (response.ok) {
+        logout && logout();
+        navigate('/');
+        window.location.reload();
+      } else {
+        const errorData = await response.json();
+        console.error('Delete error response:', errorData);
+        setError(errorData.error || 'Failed to delete account');
+      }
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      setError('An error occurred while deleting your account');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -187,6 +230,21 @@ export default function ProfilePage() {
                     Cancel
                   </button>
                 </div>
+
+                {/* Delete Account Section */}
+                <div className="border-t border-gray-200 pt-6 mt-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4">Danger Zone</h4>
+                  <p className="text-gray-600 mb-4">
+                    Once you delete your account, there is no going back. All reviews created will be removed. Please be certain.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteModal(true)}
+                    className="w-full bg-red-600 text-white py-2.5 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium text-base"
+                  >
+                    Delete Account
+                  </button>
+                </div>
               </form>
             ) : (
               <div>
@@ -223,6 +281,64 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">Delete Account</h3>
+              <p className="text-gray-600">
+                Are you sure you want to delete your account? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Type your full name to confirm: <span className="font-semibold">{profile?.name}</span>
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="Enter your full name"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+
+            <div className="flex gap-4">
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeleting || deleteConfirmation !== profile?.name}
+                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                  isDeleting || deleteConfirmation !== profile?.name
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-red-600 text-white hover:bg-red-700'
+                }`}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Account'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmation('');
+                  setError('');
+                }}
+                disabled={isDeleting}
+                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

@@ -14,6 +14,7 @@ import AboutPage from './components/AboutPage';
 import ProfilePage from './components/ProfilePage';
 import FAQsPage from './components/FAQsPage';
 import TermsPage from './components/TermsPage';
+import ResetPassword from './components/ResetPassword';
 
 function Layout({ children }) {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
@@ -412,6 +413,10 @@ export default function App() {
               <Route
                 path="/terms"
                 element={<TermsPage />}
+              />
+              <Route
+                path="/reset-password"
+                element={<ResetPassword />}
               />
             </Routes>
           </Layout>

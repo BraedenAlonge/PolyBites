@@ -23,7 +23,7 @@ export default function TermsPage() {
           
           <div className="prose prose-lg max-w-none">
             <p className="text-gray-600 mb-6">
-              <strong>Last updated:</strong> {new Date().toLocaleDateString()}
+              <strong>Last updated:</strong> July 1, 2025
             </p>
             
             <section className="mb-8">

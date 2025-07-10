@@ -283,9 +283,9 @@ export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpd
         }
       }
 
-      // Update restaurant ratings on homepage
+      // Update restaurant ratings on homepage and refresh food ratings
       if (onRestaurantUpdate) {
-        onRestaurantUpdate();
+        await onRestaurantUpdate();
       }
 
       setIsWritingReview(false);
@@ -324,7 +324,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpd
   };
 
   const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm('Are you sure you want to delete this review?')) {
+    if (!window.confirm('Are you sure you want to delete this review? This action cannot be undone.')) {
       return;
     }
 

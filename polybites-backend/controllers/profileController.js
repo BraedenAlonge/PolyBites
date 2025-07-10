@@ -1,4 +1,7 @@
 import db from '../models/db.js';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SERVICE_ROLE_KEY);
 
 export const getProfiles = async (req, res) => {
   try {
@@ -106,6 +109,51 @@ export const updateProfile = async (req, res) => {
     }
 
     res.json(rows[0]);
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const deleteProfile = async (req, res) => {
+  const { auth_id } = req.params;
+  const { user_id } = req.body;
+
+  console.log('Delete profile request:', { auth_id, user_id });
+
+  // Verify that the user is trying to delete their own profile
+  if (user_id !== auth_id) {
+    console.log('User ID mismatch:', { user_id, auth_id });
+    return res.status(403).json({ error: 'You can only delete your own profile' });
+  }
+
+  try {
+    // First, delete all food reviews by this user
+    const reviewsResult = await db.query(
+      'DELETE FROM food_reviews WHERE user_id = $1',
+      [auth_id]
+    );
+    console.log('Deleted reviews:', reviewsResult.rowCount);
+
+    // Then delete the profile
+    const { rows } = await db.query(
+      'DELETE FROM profiles WHERE auth_id = $1 RETURNING *',
+      [auth_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    // Delete the user from Supabase Auth
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(auth_id);
+    if (error) {
+      console.error('Error deleting auth user:', error);
+      return res.status(500).json({ error: 'Failed to delete user from auth system' });
+    }
+
+    console.log('Profile and auth user deleted successfully');
+    res.json({ message: 'Profile and auth user deleted successfully' });
   } catch (err) {
     console.error('Database Query Error:', err.message);
     res.status(500).json({ error: 'Internal server error' });

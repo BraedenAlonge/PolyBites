@@ -16,6 +16,8 @@ import FAQsPage from './components/FAQsPage';
 import TermsPage from './components/TermsPage';
 import ResetPassword from './components/ResetPassword';
 
+
+
 function Layout({ children }) {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
@@ -61,9 +63,10 @@ function HomePage({ restaurants, loading, error }) {
   const [hasSearched, setHasSearched] = useState(false);
   const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState(() => {
-    // Initialize from localStorage or default to 'rating'
-    return localStorage.getItem('polybites-sort-by') || 'rating';
+    // Initialize from localStorage or default to 'none'
+    return localStorage.getItem('polybites-sort-by') || 'none';
   });
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   // Animation state for subtitle lines
@@ -90,11 +93,18 @@ function HomePage({ restaurants, loading, error }) {
     const sorted = [...restaurants];
     
     switch (sortType) {
-      case 'rating':
+      case 'rating_desc':
         sorted.sort((a, b) => {
           const aRating = parseFloat(a.average_rating) || 0;
           const bRating = parseFloat(b.average_rating) || 0;
           return bRating - aRating;
+        });
+        break;
+      case 'rating_asc':
+        sorted.sort((a, b) => {
+          const aRating = parseFloat(a.average_rating) || 0;
+          const bRating = parseFloat(b.average_rating) || 0;
+          return aRating - bRating;
         });
         break;
       case 'reviews':
@@ -118,6 +128,16 @@ function HomePage({ restaurants, loading, error }) {
           return aLocation.localeCompare(bLocation);
         });
         break;
+      case 'alphabetical':
+        sorted.sort((a, b) => {
+          const aName = (a.name || '').toLowerCase();
+          const bName = (b.name || '').toLowerCase();
+          return aName.localeCompare(bName);
+        });
+        break;
+      case 'none':
+        // Return original order - no sorting
+        return sorted;
       default:
         // Default to rating sorting
         sorted.sort((a, b) => {
@@ -167,6 +187,20 @@ function HomePage({ restaurants, loading, error }) {
     return () => timers.forEach(clearTimeout);
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isSortDropdownOpen && !event.target.closest('.sort-dropdown')) {
+        setIsSortDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSortDropdownOpen]);
+
   const handleSearch = (e) => {
     const newSearchTerm = e.target.value;
     setSearchTerm(newSearchTerm);
@@ -188,7 +222,7 @@ function HomePage({ restaurants, loading, error }) {
   };
 
   const clearSort = () => {
-    setSortBy('rating');
+    setSortBy('none');
   };
 
   return (
@@ -294,31 +328,143 @@ function HomePage({ restaurants, loading, error }) {
                         </svg>
                         Sort
                       </label>
-                      <div className="relative">
-                        <select
-                          value={sortBy}
-                          onChange={(e) => handleSort(e.target.value)}
-                          className={`appearance-none cursor-pointer px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 ${
-                            sortBy === 'rating' 
-                              ? 'bg-gray-50' 
-                              : 'bg-white border-green-200'
-                          }`}
-                        >
-                          <option value="rating" className="text-gray-900">⭐ Highest Rating</option>
-                          <option value="reviews" className="text-gray-900">📝 Most Reviews</option>
-                          <option value="menu_items" className="text-gray-900">🍽️ Most Menu Items</option>
-                          <option value="location" className="text-gray-900">📍 Location</option>
-                        </select>
-                        
-                        {/* Custom dropdown arrow */}
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                          <svg className={`w-4 h-4 transition-transform duration-200 text-gray-400`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
+                      <div className="relative sort-dropdown mr-6">
+                        <div className="relative">
+                          <button
+                            onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                            className={`flex items-center gap-2 px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 ${
+                              sortBy === 'none' 
+                                ? 'bg-gray-50' 
+                                : 'bg-white border-green-200'
+                            }`}
+                          >
+                            <span className="flex items-center gap-3">
+                                                             {sortBy === 'none' && (
+                                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                 </svg>
+                               )}
+                              {sortBy === 'rating_desc' && (
+                                <>
+                                  <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                  <span className="text-gray-900 text-sm">Highest Rated</span>
+                                </>
+                              )}
+                              {sortBy === 'rating_asc' && (
+                                <>
+                                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                  <span className="text-gray-900">Lowest Rated</span>
+                                </>
+                              )}
+                              {sortBy === 'reviews' && (
+                                <>
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  <span className="text-gray-900">Most Reviews</span>
+                                </>
+                              )}
+                              {sortBy === 'menu_items' && (
+                                <>
+                                  <img src={require('./assets/images/dish.png')} alt="Food" className="w-4 h-4 flex-shrink-0" />
+                                  <span className="text-gray-900">Most Menu Items</span>
+                                </>
+                              )}
+                              {sortBy === 'location' && (
+                                <>
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  </svg>
+                                  <span className="text-gray-900">Location</span>
+                                </>
+                              )}
+                              {sortBy === 'alphabetical' && (
+                                <>
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                  </svg>
+                                  <span className="text-gray-900">A-Z</span>
+                                </>
+                              )}
+                            </span>
+                            
+                            {/* Custom dropdown arrow */}
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                              <svg className={`w-4 h-4 transition-transform duration-200 text-gray-400 ${isSortDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </button>
+                          
+                          {/* Dropdown menu */}
+                          {isSortDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[200px]">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => { handleSort('rating_desc'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <svg className="w-[1.05rem] h-[1.05rem] text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                  <span className="text-gray-900">Highest Rated</span>
+                                </button>
+                                <button
+                                  onClick={() => { handleSort('rating_asc'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                  <span className="text-gray-900">Lowest Rated</span>
+                                </button>
+                                <button
+                                  onClick={() => { handleSort('reviews'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  <span className="text-gray-900">Most Reviews</span>
+                                </button>
+                                <button
+                                  onClick={() => { handleSort('menu_items'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <img src={require('./assets/images/dish.png')} alt="Food" className="w-4 h-4 flex-shrink-0" />
+                                  <span className="text-gray-900">Most Menu Items</span>
+                                </button>
+                                <button
+                                  onClick={() => { handleSort('location'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  </svg>
+                                  <span className="text-gray-900">Location</span>
+                                </button>
+                                <button
+                                  onClick={() => { handleSort('alphabetical'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                  </svg>
+                                  <span className="text-gray-900">A-Z</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                         
                         {/* Clear sort button */}
-                        {sortBy !== 'rating' && (
+                        {sortBy !== 'none' && (
                           <button
                             onClick={clearSort}
                             className="absolute -right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50"

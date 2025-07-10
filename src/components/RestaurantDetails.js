@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import FoodReview from './FoodDetails';
 import fullStar from '../assets/stars/star.png';
@@ -13,10 +13,93 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [foodRatings, setFoodRatings] = useState({});
+  const [sortBy, setSortBy] = useState(() => {
+    return localStorage.getItem('polybites-menu-sort-by') || 'none';
+  });
   const pageRef = useRef(null);
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   
   const restaurant = restaurants?.find(r => r.id === parseInt(id));
   const averageRating = restaurant?.average_rating || 0;
+
+  // Save sort preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('polybites-menu-sort-by', sortBy);
+  }, [sortBy]);
+
+  // Add click-away handler for sort dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isSortDropdownOpen && !event.target.closest('.sort-dropdown')) {
+        setIsSortDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSortDropdownOpen]);
+
+  // Optimized sorting function for menu items
+  const sortMenuItems = useCallback((items, ratings, sortType) => {
+    if (!items.length) return items;
+    
+    const sorted = [...items];
+    
+    switch (sortType) {
+      case 'rating_desc':
+        sorted.sort((a, b) => {
+          const aRating = parseFloat(ratings[a.id]?.average_rating) || 0;
+          const bRating = parseFloat(ratings[b.id]?.average_rating) || 0;
+          return bRating - aRating;
+        });
+        break;
+      case 'rating_asc':
+        sorted.sort((a, b) => {
+          const aRating = parseFloat(ratings[a.id]?.average_rating) || 0;
+          const bRating = parseFloat(ratings[b.id]?.average_rating) || 0;
+          return aRating - bRating;
+        });
+        break;
+      case 'reviews':
+        sorted.sort((a, b) => {
+          const aReviews = parseInt(ratings[a.id]?.review_count) || 0;
+          const bReviews = parseInt(ratings[b.id]?.review_count) || 0;
+          return bReviews - aReviews;
+        });
+        break;
+      case 'menu_items':
+        sorted.sort((a, b) => {
+          const aItems = parseInt(ratings[a.id]?.menu_item_count) || 0;
+          const bItems = parseInt(ratings[b.id]?.menu_item_count) || 0;
+          return bItems - aItems;
+        });
+        break;
+      case 'alphabetical':
+        sorted.sort((a, b) => {
+          const aName = (a.name || '').toLowerCase();
+          const bName = (b.name || '').toLowerCase();
+          return aName.localeCompare(bName);
+        });
+        break;
+      case 'none':
+        return items;
+      default:
+        // Default to rating descending
+        sorted.sort((a, b) => {
+          const aRating = parseFloat(ratings[a.id]?.average_rating) || 0;
+          const bRating = parseFloat(ratings[b.id]?.average_rating) || 0;
+          return bRating - aRating;
+        });
+    }
+    
+    return sorted;
+  }, []);
+
+  // Memoized sorted menu items
+  const sortedMenuItems = useMemo(() => {
+    return sortMenuItems(menuItems, foodRatings, sortBy);
+  }, [menuItems, foodRatings, sortBy, sortMenuItems]);
 
   // Function to refresh restaurant data
   const refreshRestaurantData = async () => {
@@ -129,6 +212,11 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
     return require('../assets/icons/food_default.png');
   };
 
+  const handleSort = (value) => {
+    setSortBy(value);
+  };
+
+
   if (!restaurant) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -192,9 +280,137 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
               <div className="text-center text-red-600 py-8">Error: {error}</div>
             ) : menuItems.length > 0 ? (
               <div className="mt-8">
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">Menu Items</h3>
+                <div className="flex flex-col space-y-4 mb-6">
+                  <h3 className="text-xl font-semibold text-gray-800">Menu Items</h3>
+                  
+                  <div className="flex gap-4 items-center">
+                    <div className="relative sort-dropdown mr-6">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M7 8h9m-9 4h6m-6 4h3" />
+                          </svg>
+                          Sort
+                        </label>
+                        <div className="relative">
+                          <button
+                            onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                            className={`flex items-center gap-3 px-4 py-3 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 ${
+                              sortBy === 'none' 
+                                ? 'bg-gray-50' 
+                                : 'bg-white border-green-200'
+                            }`}
+                          >
+                            <span className="flex items-center gap-3">
+                              {sortBy === 'none' && (
+                                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                              )}
+                              {sortBy === 'rating_desc' && (
+                                <>
+                                  <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                  <span className="text-gray-900 text-sm">Highest Rated</span>
+                                </>
+                              )}
+                              {sortBy === 'rating_asc' && (
+                                <>
+                                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                  <span className="text-gray-900 text-sm">Lowest Rated</span>
+                                </>
+                              )}
+                              {sortBy === 'reviews' && (
+                                <>
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  <span className="text-gray-900 text-sm">Most Reviews</span>
+                                </>
+                              )}
+                             
+                              {sortBy === 'alphabetical' && (
+                                <>
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                  </svg>
+                                  <span className="text-gray-900 text-sm">A-Z</span>
+                                </>
+                              )}
+                            </span>
+                            {/* Custom dropdown arrow */}
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                              <svg className={`w-4 h-4 transition-transform duration-200 text-gray-400 ${isSortDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
+                          </button>
+                          {sortBy !== 'none' && (
+                            <button
+                              onClick={() => setSortBy('none')}
+                              className="absolute -right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50"
+                              aria-label="Clear sort"
+                              title="Clear sort"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                          {/* Dropdown menu */}
+                          {isSortDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[200px]">
+                              <div className="py-1">
+                                <button
+                                  onClick={() => { handleSort('rating_desc'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                  <span className="text-gray-900 text-sm">Highest Rated</span>
+                                </button>
+                                <button
+                                  onClick={() => { handleSort('rating_asc'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                                  </svg>
+                                  <span className="text-gray-900 text-sm">Lowest Rated</span>
+                                </button>
+                                <button
+                                  onClick={() => { handleSort('reviews'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  <span className="text-gray-900 text-sm">Most Reviews</span>
+                                </button>
+                               
+                                <button
+                                  onClick={() => { handleSort('alphabetical'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                  </svg>
+                                  <span className="text-gray-900 text-sm">A-Z</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {menuItems.map((item) => {
+                  {sortedMenuItems.map((item) => {
                     const foodRating = foodRatings[item.id] || { review_count: 0, average_rating: 0 };
                     return (
                       <div

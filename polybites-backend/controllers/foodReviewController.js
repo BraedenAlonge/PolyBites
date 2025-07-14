@@ -252,3 +252,38 @@ export const getReviewLikes = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 }; 
+
+export const getFoodReviewsByUserId = async (req, res) => {
+  const { userId } = req.params;
+  
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  try {
+    const { rows } = await db.query(
+      `SELECT 
+        fr.*,
+        f.name as food_name,
+        f.food_type AS food_type,
+        r.name as restaurant_name,
+        r.id as restaurant_id,
+        COALESCE(l.like_count, 0) as like_count
+       FROM food_reviews fr 
+       JOIN foods f ON fr.food_id = f.id 
+       JOIN restaurants r ON f.restaurant_id = r.id 
+       LEFT JOIN (
+         SELECT food_review_id, COUNT(*) as like_count
+         FROM likes
+         GROUP BY food_review_id
+       ) l ON fr.id = l.food_review_id
+       WHERE fr.user_id = $1 
+       ORDER BY fr.created_at DESC`,
+      [userId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}; 

@@ -99,8 +99,18 @@ export const updateProfile = async (req, res) => {
   }
 
   try {
+    // Check if user can change name
+    const check = await db.query('SELECT name_change FROM profiles WHERE auth_id = $1', [auth_id]);
+    if (check.rows.length === 0) {
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+    if (check.rows[0].name_change === 0) {
+      return res.status(403).json({ error: 'You can only change your name once.' });
+    }
+
+    // Update name and set name_change to 0
     const { rows } = await db.query(
-      'UPDATE profiles SET name = $1 WHERE auth_id = $2 RETURNING *',
+      'UPDATE profiles SET name = $1, name_change = 0 WHERE auth_id = $2 RETURNING *',
       [name, auth_id]
     );
 

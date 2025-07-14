@@ -1,5 +1,5 @@
 import express from 'express';
-import { getFoodReviews, getFoodReviewById, createFoodReview, getFoodReviewsByFoodId, getFoodReviewsByRestaurantId, getFoodReviewDetails, getFoodReviewStats, getFoodReviewStatsByRestaurant, deleteFoodReview, getLike, toggleLike, getReviewLikes } from '../controllers/foodReviewController.js';
+import { getFoodReviews, getFoodReviewById, createFoodReview, getFoodReviewsByFoodId, getFoodReviewsByRestaurantId, getFoodReviewDetails, getFoodReviewStats, getFoodReviewStatsByRestaurant, deleteFoodReview, getLike, toggleLike, getReviewLikes, getFoodReviewsByUserId } from '../controllers/foodReviewController.js';
 
 const router = express.Router();
 
@@ -9,6 +9,7 @@ router.get('/food/:foodId/stats', getFoodReviewStats);
 router.get('/restaurant/:restaurantId/stats', getFoodReviewStatsByRestaurant);
 router.get('/food/:foodId', getFoodReviewsByFoodId);
 router.get('/restaurant/:restaurantId', getFoodReviewsByRestaurantId);
+router.get('/user/:userId', getFoodReviewsByUserId);
 
 // Like routes
 router.get('/:reviewId/likes', getReviewLikes);

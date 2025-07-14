@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Filter } from 'bad-words';
+import fullStar from '../assets/stars/star.png';
+import halfStar from '../assets/stars/half_star.png';
+import emptyStar from '../assets/stars/empty_star.png';
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
@@ -17,7 +20,37 @@ export default function ProfilePage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [userReviews, setUserReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const filter = new Filter();
+
+  const getFoodIcon = (food_type) => {
+    try {
+      if (food_type) {
+        return require(`../assets/icons/${food_type.toLowerCase()}.png`);
+      }
+    } catch (e) {}
+    return require('../assets/icons/food_default.png');
+  };
+
+  const renderStars = (rating) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<img key={i} src={fullStar} alt="star" className="w-4 h-4" />);
+    }
+    if (hasHalfStar) {
+      stars.push(<img key="half" src={halfStar} alt="half star" className="w-4 h-4" />);
+    }
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<img key={`empty-${i}`} src={emptyStar} alt="empty star" className="w-4 h-4" />);
+    }
+
+    return stars;
+  };
   
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -52,10 +85,40 @@ export default function ProfilePage() {
     fetchProfile();
   }, [user, navigate]);
 
+  useEffect(() => {
+    if (profile && user) {
+      fetchUserReviews();
+    }
+  }, [profile, user]);
+
+  const fetchUserReviews = async () => {
+    if (!user) return;
+    
+    setReviewsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/food-reviews/user/${user.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch reviews');
+      }
+      const reviewsData = await response.json();
+      setUserReviews(reviewsData);
+    } catch (err) {
+      console.error('Error fetching user reviews:', err);
+      setError('Failed to load your reviews');
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
+    if (profile?.name_change === 1) {
+      if (!window.confirm('Are you sure? You can only change your name once.')) {
+        return;
+      }
+    }
     // Check for profanity in name
     if (filter.isProfane(formData.name)) {
       setError('Name contains inappropriate language. Please choose a different name.');
@@ -81,7 +144,13 @@ export default function ProfilePage() {
         setIsEditing(false); // Exit edit mode after successful update
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Failed to update profile');
+        if (response.status === 403) {
+          setError('You have already changed your name once. Further changes are not allowed.');
+          setProfile({ ...profile, name_change: 0 });
+          setIsEditing(false);
+        } else {
+          setError(errorData.error || 'Failed to update profile');
+        }
       }
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -146,7 +215,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (error) {
+  if (error && error !== 'You have already changed your name once. Further changes are not allowed.') {
     return (
       <div className="min-h-screen bg-green-50 flex items-center justify-center">
         <div className="text-center">
@@ -158,6 +227,9 @@ export default function ProfilePage() {
       </div>
     );
   }
+
+  // Debug: log profile
+  console.log('Profile object:', profile);
 
   return (
     <div className="min-h-screen bg-green-50">
@@ -184,7 +256,56 @@ export default function ProfilePage() {
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-lg shadow-lg p-8">
             {isEditing ? (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                console.log('Submitting form');
+                setError("");
+                if (profile?.name_change === 0) {
+                  // Do nothing if not allowed
+                  return;
+                }
+                // Normalize whitespace for comparison
+                const normalize = (str) => str.trim().replace(/\s+/g, ' ');
+                if (normalize(formData.name) === normalize(profile?.name)) {
+                  setIsEditing(false);
+                  return;
+                }
+                // Always show confirmation for debugging
+                const confirmed = window.confirm('Are you sure? You can only change your username once. This action is permanent.');
+                if (!confirmed) {
+                  return;
+                }
+                // Check for profanity in name
+                if (filter.isProfane(formData.name)) {
+                  setError('Name contains inappropriate language. Please choose a different name.');
+                  return;
+                }
+                try {
+                  const requestBody = { name: formData.name };
+                  const response = await fetch(`http://localhost:5000/api/profiles/auth/${user.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody),
+                  });
+                  if (response.ok) {
+                    const updatedProfile = await response.json();
+                    setProfile(updatedProfile);
+                    setIsEditing(false);
+                  } else {
+                    const errorData = await response.json();
+                    if (response.status === 403) {
+                      // Do not set global error, just update profile and show warning
+                      setProfile({ ...profile, name_change: 0 });
+                      setIsEditing(false);
+                    } else {
+                      setError(errorData.error || 'Failed to update profile');
+                    }
+                  }
+                } catch (err) {
+                  console.error('Error updating profile:', err);
+                  setError('An error occurred while updating your profile');
+                }
+              }} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                     Full Name
@@ -197,7 +318,17 @@ export default function ProfilePage() {
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     required
+                    disabled={profile?.name_change === 0}
                   />
+                  {/* Always show warning for debugging */}
+                  <p className="text-xs text-yellow-600 mt-1 font-semibold">
+                    Warning: You can only change your username once. This action is permanent.
+                  </p>
+                  {profile?.name_change === 0 && (
+                    <p className="text-xs text-red-600 mt-1">
+                      You have already changed your name once. Further changes are not allowed.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -219,6 +350,7 @@ export default function ProfilePage() {
                   <button
                     type="submit"
                     className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                    disabled={profile?.name_change === 0}
                   >
                     Save Changes
                   </button>
@@ -272,9 +404,91 @@ export default function ProfilePage() {
                   <button
                     onClick={() => setIsEditing(true)}
                     className="w-full bg-green-600 text-white py-2.5 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium text-base"
+                    disabled={profile?.name_change === 0}
                   >
                     Edit Profile
                   </button>
+                </div>
+
+                {profile?.name_change === 1 && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    You can only change your name once. Click "Edit Profile" to change it.
+                  </p>
+                )}
+                {profile?.name_change === 0 && (
+                  <p className="text-xs text-red-600 mt-1">
+                    You have already changed your name once. Further changes are not allowed.
+                  </p>
+                )}
+
+                {/* User Reviews Section */}
+                <div className="mt-8 border-t border-gray-200 pt-6">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">My Reviews</h3>
+                  
+                  {reviewsLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+                      <p className="mt-2 text-gray-600">Loading your reviews...</p>
+                    </div>
+                  ) : userReviews.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">You haven't written any reviews yet.</p>
+                      <Link 
+                        to="/" 
+                        className="inline-block mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Write Your First Review
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {userReviews.map((review) => {
+                        console.log('Review object:', review);
+                        console.log('getFoodIcon argument:', review.food_type);
+                        return (
+                          <div 
+                            key={review.id} 
+                            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200"
+                            onClick={() => navigate(`/restaurant/${review.restaurant_id}?highlight=${review.food_id}`)}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex items-center space-x-3">
+                                <img 
+                                  src={getFoodIcon(review.food_type)} 
+                                  alt={review.food_name} 
+                                  className="w-8 h-8 object-cover rounded"
+                                />
+                                <div>
+                                  <h4 className="font-semibold text-gray-800">{review.food_name}</h4>
+                                  <p className="text-sm text-gray-600">{review.restaurant_name}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                {renderStars(review.rating)}
+                              </div>
+                            </div>
+                            <p className="text-gray-700 text-sm overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{review.text}</p>
+                            <div className="flex justify-between items-center mt-2">
+                              <div className="flex items-center space-x-4">
+                                <span className="text-xs text-gray-500">
+                                  {new Date(review.created_at).toLocaleDateString()}
+                                </span>
+                                <div className="flex items-center space-x-1 text-xs text-gray-500">
+                                  <span>❤</span>
+                                  <span>{review.like_count || 0}</span>
+                                </div>
+                              </div>
+                              {review.anonymous && (
+                                <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">
+                                  Anonymous
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

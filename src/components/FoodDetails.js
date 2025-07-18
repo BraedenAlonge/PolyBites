@@ -98,6 +98,7 @@ export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpd
       }
       const userData = await response.json();
       const userName = userData.name;
+      console.log('Fetched name for', userId, ':', userName); // DEBUG
       
       // Cache the result
       userNameCache.set(userId, userName);
@@ -119,13 +120,23 @@ export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpd
 
   // Batch fetch user names for all reviews
   const fetchUserNamesBatch = useCallback(async (reviewsData) => {
+    console.log('Current user:', user);
+    console.log('Review user IDs:', reviewsData.map(r => r.user_id));
     const uniqueUserIds = [...new Set(reviewsData.map(review => review.user_id))];
     const uncachedUserIds = uniqueUserIds.filter(userId => !userNameCache.has(userId));
-    
-    // Fetch only uncached user names
+    // Add current user to cache if not present
+    if (user && user.id && user.name && !userNameCache.has(user.id)) {
+      userNameCache.set(user.id, user.name);
+      setUserNames(prev => ({
+        ...prev,
+        [user.id]: user.name
+      }));
+      console.log('Set current user name in cache:', user.id, user.name);
+    }
+    console.log('Fetching user names for:', uncachedUserIds); // DEBUG
     const promises = uncachedUserIds.map(userId => fetchUserName(userId));
     await Promise.all(promises);
-  }, [fetchUserName]);
+  }, [fetchUserName, user]);
 
   useEffect(() => {
     if (isOpen && foodItem?.id) {
@@ -232,6 +243,49 @@ export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpd
       fetchReviews();
     }
   }, [isOpen, foodItem?.id, user, fetchUserNamesBatch]);
+
+  useEffect(() => {
+    if (isOpen) {
+      userNameCache.clear();
+      setUserNames({});
+    }
+  }, [isOpen, foodItem]);
+
+  useEffect(() => {
+    async function fetchOwnProfileName() {
+      if (user && user.id && !userNames[user.id]) {
+        try {
+          const response = await fetch(`http://localhost:5000/api/profiles/auth/${user.id}`);
+          if (response.ok) {
+            const profile = await response.json();
+            console.log('Fetched profile for current user:', profile); // DEBUG
+            if (profile.name) {
+              userNameCache.set(user.id, profile.name);
+              setUserNames(prev => {
+                const updated = { ...prev, [user.id]: profile.name };
+                console.log('Updated userNames after setting own name:', updated); // DEBUG
+                return updated;
+              });
+              console.log('Fetched and set own profile name:', user.id, profile.name);
+            } else {
+              console.log('Profile has no name property or is empty:', profile);
+            }
+          } else {
+            console.log('Failed to fetch profile for current user');
+          }
+        } catch (err) {
+          console.error('Error fetching own profile name:', err);
+        }
+      }
+    }
+    fetchOwnProfileName();
+  }, [user, userNames]);
+
+  useEffect(() => {
+    if (reviews.length > 0) {
+      fetchUserNamesBatch(reviews);
+    }
+  }, [reviews, fetchUserNamesBatch]);
 
   if (!isOpen || !foodItem) return null;
 
@@ -582,72 +636,78 @@ export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpd
                   <div className="text-center text-red-600 py-4">Error loading reviews: {error}</div>
                 ) : reviews.length > 0 ? (
                   <div className="space-y-3">
-                    {getSortedReviews().map((review) => (
-                      <div key={review.id} className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
+                    {getSortedReviews().map((review) => {
+                      console.log('userNames:', userNames, 'review.user_id:', review.user_id);
+                      console.log('Rendering review:', review.user_id, 'userNames:', userNames, 'user.id:', user?.id);
+                      return (
+                        <div key={review.id} className="bg-gray-50 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
 
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-800">
-                              {review.anonymous ? getRandomAnonymousName(review.id) : (formatName(userNames[review.user_id]) || 'User # ' + review.user_id)}
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              {review.created_at ? new Date(review.created_at).toLocaleDateString('en-US', {
-                                month: '2-digit',
-                                day: '2-digit',
-                                year: 'numeric'
-                              }) : ''}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-800">
+                                {review.anonymous
+                                  ? getRandomAnonymousName(review.id)
+                                  : (formatName(userNames[review.user_id]) || 'User')}
+                              </span>
+                              <span className="text-sm text-gray-500">
+                                {review.created_at ? new Date(review.created_at).toLocaleDateString('en-US', {
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  year: 'numeric'
+                                }) : ''}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                             <span className="text-green-600 flex items-center">{renderStars(review.rating)}</span>
+                              {user && user.id === review.user_id && (
+                                <button
+                                  onClick={() => handleDeleteReview(review.id)}
+                                  className="text-red-500 hover:text-red-700 transition-colors"
+                                  title="Delete review"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
                           </div>
-
-                          <div className="flex items-center gap-2">
-                           <span className="text-green-600 flex items-center">{renderStars(review.rating)}</span>
-                            {user && user.id === review.user_id && (
-                              <button
-                                onClick={() => handleDeleteReview(review.id)}
-                                className="text-red-500 hover:text-red-700 transition-colors"
-                                title="Delete review"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          <p className="text-gray-600">{review.text}</p>
+                          <div className="flex justify-end mt-2">
+                            <button
+                              onClick={() => throttledHandleLikeReview(review.id)}
+                              disabled={likeLoading.has(review.id)}
+                              className={`flex items-center gap-1 transition-colors ${
+                                likeLoading.has(review.id) 
+                                  ? 'text-gray-400 cursor-not-allowed' 
+                                  : 'text-gray-500 hover:text-red-500'
+                              }`}
+                              title={userLikes.has(review.id) ? "Unlike review" : "Like review"}
+                            >
+                              {likeLoading.has(review.id) ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
+                              ) : (
+                                <svg 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  className="h-5 w-5" 
+                                  viewBox="0 0 20 20" 
+                                  fill={userLikes.has(review.id) ? "currentColor" : "none"}
+                                  stroke="currentColor"
+                                >
+                                  <path 
+                                    fillRule="evenodd" 
+                                    d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
+                                    clipRule="evenodd" 
+                                  />
                                 </svg>
-                              </button>
-                            )}
+                              )}
+                              <span className="text-sm">{likeCounts.get(review.id) || 0}</span>
+                            </button>
                           </div>
                         </div>
-                        <p className="text-gray-600">{review.text}</p>
-                        <div className="flex justify-end mt-2">
-                          <button
-                            onClick={() => throttledHandleLikeReview(review.id)}
-                            disabled={likeLoading.has(review.id)}
-                            className={`flex items-center gap-1 transition-colors ${
-                              likeLoading.has(review.id) 
-                                ? 'text-gray-400 cursor-not-allowed' 
-                                : 'text-gray-500 hover:text-red-500'
-                            }`}
-                            title={userLikes.has(review.id) ? "Unlike review" : "Like review"}
-                          >
-                            {likeLoading.has(review.id) ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
-                            ) : (
-                              <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                className="h-5 w-5" 
-                                viewBox="0 0 20 20" 
-                                fill={userLikes.has(review.id) ? "currentColor" : "none"}
-                                stroke="currentColor"
-                              >
-                                <path 
-                                  fillRule="evenodd" 
-                                  d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" 
-                                  clipRule="evenodd" 
-                                />
-                              </svg>
-                            )}
-                            <span className="text-sm">{likeCounts.get(review.id) || 0}</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-gray-500 text-center py-4">No reviews yet. Be the first to review!</p>

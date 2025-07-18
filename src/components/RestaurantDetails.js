@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import FoodReview from './FoodDetails';
 import fullStar from '../assets/stars/star.png';
 import halfStar from '../assets/stars/half_star.png';
@@ -8,6 +8,7 @@ import emptyStar from '../assets/stars/empty_star.png';
 export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedFood, setSelectedFood] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -174,6 +175,18 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
+
+  // Open food modal if highlight param is present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const highlight = params.get('highlight');
+    if (highlight && menuItems.length > 0) {
+      const food = menuItems.find(item => String(item.id) === String(highlight));
+      if (food) {
+        setSelectedFood(food);
+      }
+    }
+  }, [location.search, menuItems]);
 
   // Render stars with half-star support for average rating
   const renderStars = (rating) => {

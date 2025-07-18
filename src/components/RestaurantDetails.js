@@ -4,6 +4,8 @@ import FoodReview from './FoodDetails';
 import fullStar from '../assets/stars/star.png';
 import halfStar from '../assets/stars/half_star.png';
 import emptyStar from '../assets/stars/empty_star.png';
+import valueSortIcon from '../assets/icons/value_sort.png';
+import valueIcon from '../assets/icons/value.png';
 
 export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
   const { id } = useParams();
@@ -22,6 +24,38 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
   
   const restaurant = restaurants?.find(r => r.id === parseInt(id));
   const averageRating = restaurant?.average_rating || 0;
+
+  // Function to get gradient color based on value
+  const getValueColor = (value) => {
+    if (value >= 130) {
+      return { backgroundColor: '#06b6d4' }; // Cyan for high values
+    } else if (value <= 30) {
+      return { backgroundColor: '#0f172a' }; // Very very dark blue for low values
+    } else {
+      // Solid color from very dark blue to cyan for values between 30-130
+      const ratio = (value - 30) / 100; // 100 is the range from 30 to 130
+      const red = Math.floor(15 - (ratio * 9));
+      const green = Math.floor(23 + (ratio * 159));
+      const blue = Math.floor(42 + (ratio * 170));
+      return { backgroundColor: `rgb(${red}, ${green}, ${blue})` };
+    }
+  };
+
+  // Function to get gradient text color based on value
+  const getValueTextColor = (value) => {
+    if (value >= 130) {
+      return { color: '#06b6d4' }; // Solid cyan for high values
+    } else if (value <= 30) {
+      return { color: '#0f172a' }; // Solid very dark blue for low values
+    } else {
+      // Solid color from very dark blue to cyan for values between 30-130
+      const ratio = (value - 30) / 100; // 100 is the range from 30 to 130
+      const red = Math.floor(15 - (ratio * 9));
+      const green = Math.floor(23 + (ratio * 159));
+      const blue = Math.floor(42 + (ratio * 170));
+      return { color: `rgb(${red}, ${green}, ${blue})` };
+    }
+  };
 
   // Save sort preference to localStorage whenever it changes
   useEffect(() => {
@@ -60,6 +94,13 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
           const aRating = parseFloat(ratings[a.id]?.average_rating) || 0;
           const bRating = parseFloat(ratings[b.id]?.average_rating) || 0;
           return aRating - bRating;
+        });
+        break;
+      case 'value_desc':
+        sorted.sort((a, b) => {
+          const aValue = parseFloat(a.value) || 0;
+          const bValue = parseFloat(b.value) || 0;
+          return bValue - aValue;
         });
         break;
       case 'reviews':
@@ -278,13 +319,40 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2 mb-10 text-lg font-medium" style={{ minHeight: '3.5rem' }}>
+            <div className="flex items-center justify-between mb-10 text-lg font-medium" style={{ minHeight: '3.5rem' }}>
               <span className="flex items-center gap-2">
                 <span style={{ color: getRatingColor(averageRating), fontSize: '2.5rem', fontWeight: 'bold', lineHeight: 1 }}>
                   {Number(averageRating).toFixed(1)}
                 </span>
                 <span className="flex items-center" style={{ fontSize: '2.2rem', height: '2.5rem' }}>{renderStars(averageRating)}</span>
               </span>
+              {typeof restaurant.average_value === 'number' && restaurant.average_value > 0 && (
+                <div className="flex items-center gap-2">
+                  <span 
+                    className="flex items-center gap-2 text-4xl font-bold" 
+                  >
+                    <span className="text-gray">Avg Value</span>
+                    <img src={valueIcon} alt="value" className="w-9 h-9" />
+                    <span style={getValueTextColor(Math.trunc(restaurant.average_value * 100))}>
+                      {Math.trunc(restaurant.average_value * 100)}
+                    </span>
+                  </span>
+                  <div className="relative group">
+                    <svg 
+                      className="w-6 h-6 text-gray-400 hover:text-gray-600 cursor-help" 
+                      fill="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                    </svg>
+                    <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
+                      The value of an item is calculated by rating / price * 100.<br/>
+                      A higher value means more bang for your buck. 
+                      <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {loading ? (
@@ -353,6 +421,12 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
                                   <span className="text-gray-900 text-sm">A-Z</span>
                                 </>
                               )}
+                              {sortBy === 'value_desc' && (
+                                <>
+                                  <img src={valueSortIcon} alt="value sort" className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                                  <span className="text-gray-900 text-sm">Best Value</span>
+                                </>
+                              )}
                             </span>
                             {/* Custom dropdown arrow */}
                             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -414,6 +488,13 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
                                   </svg>
                                   <span className="text-gray-900 text-sm">A-Z</span>
                                 </button>
+                                <button
+                                  onClick={() => { handleSort('value_desc'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <img src={valueSortIcon} alt="value sort" className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                                  <span className="text-gray-900 text-sm">Best Value</span>
+                                </button>
                               </div>
                             </div>
                           )}
@@ -452,6 +533,16 @@ export default function RestaurantDetails({ restaurants, onRestaurantUpdate }) {
                             {Number(foodRating.average_rating).toFixed(1)}
                             <img src={fullStar} alt="star" className="w-4 h-4 inline" />
                           </div>
+                          {/* Food Value Badge - Dark blue to cyan gradient */}
+                          {typeof item.value === 'number' && item.value > 0 && (
+                            <div 
+                              className="absolute bottom-0 right-0 m-4 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1"
+                              style={getValueColor(Math.trunc(item.value * 100))}
+                            >
+                              <img src={valueIcon} alt="value" className="w-4 h-4" />
+                              {Math.trunc(item.value * 100)}
+                            </div>
+                          )}
                         </div>
                         <h4 className="text-lg font-medium text-gray-800 mb-2">
                           {item.name}

@@ -9,6 +9,7 @@ In polybites-backend, create a .env file. Add the following line with no extra c
 DATABASE_URL=postgres://postgres.[TRANSAC-POOL]:[DB-PASSWORD]@aws-0-us-east-2.pooler.supabase.com:[PORT]/postgres
 SUPABASE_URL=https://[YOUR-URL].supabase.co
 SUPABASE_ANON_KEY=[ANON-PASSWORD]
+SERVICE_ROLE_KEY
 Your URL may be different. Copy the specific transaction pooler [TRANSAC-POOL] and [PORT] 
 connection part in the link under:
 Connect -> Transaction pooler   

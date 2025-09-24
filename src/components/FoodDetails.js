@@ -48,6 +48,22 @@ export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpd
 
   const [currentFoodId, setCurrentFoodId] = useState(null);
 
+  // Function to get gradient color based on value
+  const getValueColor = (value) => {
+    if (value >= 130) {
+      return { backgroundColor: '#06b6d4' }; // Cyan for high values
+    } else if (value <= 30) {
+      return { backgroundColor: '#0f172a' }; // Very very dark blue for low values
+    } else {
+      // Solid color from very dark blue to cyan for values between 30-130
+      const ratio = (value - 30) / 100; // 100 is the range from 30 to 130
+      const red = Math.floor(15 - (ratio * 9));
+      const green = Math.floor(23 + (ratio * 159));
+      const blue = Math.floor(42 + (ratio * 170));
+      return { backgroundColor: `rgb(${red}, ${green}, ${blue})` };
+    }
+  };
+
   const handleCloseSignIn = () => {
     setShowSignIn(false);
   };
@@ -620,15 +636,26 @@ export default function FoodDetails({ isOpen, onClose, foodItem, onRestaurantUpd
                   </div>
                 </div>
                 {/* Average rating display */}
-                <div className="flex items-center gap-2 mb-4">
-                  <span
-                    className="font-bold text-lg"
-                    style={{ color: getRatingColor(reviewStats.average_rating) }}
-                  >
-                    {reviewStats.average_rating ? Number(reviewStats.average_rating).toFixed(1) : '0.0'}
-                  </span>
-                  <span className="flex items-center">{renderStars(reviewStats.average_rating)}</span>
-                  <span className="text-gray-500 text-sm">({reviewStats.review_count || 0} reviews)</span>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="font-bold text-lg"
+                      style={{ color: getRatingColor(reviewStats.average_rating) }}
+                    >
+                      {reviewStats.average_rating ? Number(reviewStats.average_rating).toFixed(1) : '0.0'}
+                    </span>
+                    <span className="flex items-center">{renderStars(reviewStats.average_rating)}</span>
+                    <span className="text-gray-500 text-sm">({reviewStats.review_count || 0} reviews)</span>
+                  </div>
+                  {typeof foodItem.value === 'number' && foodItem.value > 0 && (
+                    <span 
+                      className="ml-4 px-2 py-1 text-white rounded text-sm font-medium" 
+                      style={getValueColor(Math.trunc(foodItem.value * 100))}
+                      title="Value = Average Rating / Price * 100"
+                    >
+                      Value: {Math.trunc(foodItem.value * 100)}
+                    </span>
+                  )}
                 </div>
                 {loading ? (
                   <div className="text-center py-4">Loading reviews...</div>

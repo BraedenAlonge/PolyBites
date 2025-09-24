@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import '../styles/Restaurant.css';
 import fullStar from '../assets/stars/star.png';
+import valueIcon from '../assets/icons/value.png';
 
 const Restaurant = React.memo(({ data }) => {
   // Use the data that's already available from the main API call
@@ -9,6 +10,23 @@ const Restaurant = React.memo(({ data }) => {
   const reviewCount = data?.review_count || 0;
   const menuItemCount = data?.menu_item_count || 0;
   const formattedRating = Number(averageRating).toFixed(1);
+  const formattedValue = typeof data.average_value === 'number' && data.average_value > 0 ? Math.trunc(data.average_value * 100) : null;
+
+  // Function to get gradient color based on value
+  const getValueColor = (value) => {
+    if (value >= 130) {
+      return { backgroundColor: '#06b6d4' }; // Cyan for high values
+    } else if (value <= 30) {
+      return { backgroundColor: '#0f172a' }; // Very very dark blue for low values
+    } else {
+      // Solid color from very dark blue to cyan for values between 30-130
+      const ratio = (value - 30) / 100; // 100 is the range from 30 to 130
+      const red = Math.floor(15 - (ratio * 9));
+      const green = Math.floor(23 + (ratio * 159));
+      const blue = Math.floor(42 + (ratio * 170));
+      return { backgroundColor: `rgb(${red}, ${green}, ${blue})` };
+    }
+  };
 
   // Return early with loading state if data is not yet available
   if (!data) {
@@ -36,6 +54,16 @@ const Restaurant = React.memo(({ data }) => {
           {formattedRating}
           <img src={fullStar} alt="star" className="w-4 h-4 inline" />
         </div>
+        {formattedValue !== null && (
+          <div 
+            className="absolute bottom-0 right-0 m-4 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 shadow-md" 
+            style={getValueColor(formattedValue)}
+            title="Average Value = Avg(Food Value) * 100"
+          >
+            <img src={valueIcon} alt="value" className="w-4 h-4 inline" />
+            {formattedValue}
+          </div>
+        )}
       </div>
       <div className="p-5 h-[200px] flex flex-col">
         <div className="flex items-center justify-between mb-1">

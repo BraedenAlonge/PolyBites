@@ -125,6 +125,37 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+export const checkUserExists = async (req, res) => {
+  const { email } = req.query;
+  
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  try {
+    // Check if user exists in auth.users table
+    const { rows } = await db.query(
+      'SELECT id, email FROM auth.users WHERE email = $1',
+      [email]
+    );
+    
+    if (rows.length > 0) {
+      return res.json({ 
+        exists: true, 
+        message: 'User already exists with this email' 
+      });
+    } else {
+      return res.json({ 
+        exists: false, 
+        message: 'Email is available' 
+      });
+    }
+  } catch (err) {
+    console.error('Database Query Error:', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const deleteProfile = async (req, res) => {
   const { auth_id } = req.params;
   const { user_id } = req.body;

@@ -1,9 +1,10 @@
 import express from 'express';
-import { getProfiles, getProfileById, getProfileByAuthId, createProfile, updateProfile, deleteProfile } from '../controllers/profileController.js';
+import { getProfiles, getProfileById, getProfileByAuthId, createProfile, updateProfile, deleteProfile, checkUserExists } from '../controllers/profileController.js';
 
 const router = express.Router();
 
 router.get('/', getProfiles);
+router.get('/check-user', checkUserExists);
 router.get('/auth/:auth_id', getProfileByAuthId);
 router.get('/:id', getProfileById);
 router.post('/', createProfile);

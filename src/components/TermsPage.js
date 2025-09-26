@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import ContactForm from './ContactForm';
 
 export default function TermsPage() {
+  const [showContactForm, setShowContactForm] = useState(false);
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 relative">
       {/* Back to Home Button */}
@@ -120,15 +123,24 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">12. Contact Information</h2>
               <p className="text-gray-600 mb-4">
-                If you have any questions about these Terms of Service, please contact us at:
+                If you have any questions about these Terms of Service, please contact us:
               </p>
-              <p className="text-gray-600">
-                Email: <a href="mailto:contact@polybites.com" className="text-green-600 hover:text-green-700">contact@polybites.com</a>
-              </p>
+              <button
+                onClick={() => setShowContactForm(true)}
+                className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                Contact Us
+              </button>
             </section>
           </div>
         </div>
       </div>
+      
+      {/* Contact Form Modal */}
+      <ContactForm 
+        isOpen={showContactForm} 
+        onClose={() => setShowContactForm(false)} 
+      />
     </div>
   );
 } 

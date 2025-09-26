@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import ContactForm from './ContactForm';
 
 export default function FAQsPage() {
+  const [showContactForm, setShowContactForm] = useState(false);
+  
   const faqs = [
     {
       question: "What is PolyBites?",
@@ -84,15 +87,21 @@ export default function FAQsPage() {
             <p className="text-gray-600 mb-4">
               If you couldn't find the answer you're looking for, we're here to help!
             </p>
-            <a
-              href="mailto:contact@polybites.com"
+            <button
+              onClick={() => setShowContactForm(true)}
               className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
             >
               Contact Support
-            </a>
+            </button>
           </div>
         </div>
       </div>
+      
+      {/* Contact Form Modal */}
+      <ContactForm 
+        isOpen={showContactForm} 
+        onClose={() => setShowContactForm(false)} 
+      />
     </div>
   );
 } 

@@ -1,7 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import ContactForm from './ContactForm';
 
 export default function AboutPage() {
+  const [showContactForm, setShowContactForm] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -107,18 +110,18 @@ export default function AboutPage() {
                 Have questions, suggestions, or want to contribute to PolyBites? We'd love to hear from you!
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <a 
-                  href="mailto:contact@polybites.com" 
-                  className="flex items-center space-x-2 bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-green-100 transition-colors"
+                <button
+                  onClick={() => setShowContactForm(true)}
+                  className="flex items-center justify-center space-x-2 bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
                 >
                   <span>📧</span>
-                  <span>contact@polybites.com</span>
-                </a>
+                  <span>Contact Us</span>
+                </button>
                 <a 
                   href="https://github.com/BraedenAlonge/PolyBites" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center space-x-2 bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-green-100 transition-colors"
+                  className="flex items-center justify-center space-x-2 bg-white text-green-600 px-4 py-2 rounded-lg font-medium hover:bg-green-100 transition-colors"
                 >
                   <span>🐙</span>
                   <span>GitHub</span>
@@ -128,6 +131,12 @@ export default function AboutPage() {
           </div>
         </div>
       </div>
+      
+      {/* Contact Form Modal */}
+      <ContactForm 
+        isOpen={showContactForm} 
+        onClose={() => setShowContactForm(false)} 
+      />
     </div>
   );
 } 

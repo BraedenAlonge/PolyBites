@@ -29,6 +29,23 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
     confirmPassword: ''
   });
 
+  const checkUserExists = async (email) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/profiles/check-user?email=${encodeURIComponent(email)}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.exists;
+      } else {
+        console.error('Error checking user existence:', response.statusText);
+        return false; // If check fails, allow signup to proceed
+      }
+    } catch (error) {
+      console.error('Error checking user existence:', error);
+      return false; // If check fails, allow signup to proceed
+    }
+  };
+
   const createProfile = async (userId) => {
     try {
       // Add a small delay to ensure the auth user is properly created
@@ -73,6 +90,13 @@ export default function SignUpPopup({ isOpen, onClose, onSwitchToSignIn }) {
     }
 
     try {
+      // 0. Check if user already exists
+      const userExists = await checkUserExists(formData.emailOrPhone);
+      if (userExists) {
+        alert('An account with this email already exists. Please try signing in instead.');
+        return;
+      }
+
       // 1. Sign up with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.emailOrPhone,

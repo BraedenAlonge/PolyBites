@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ContactForm from './ContactForm';
 
-export default function AboutPage() {
+export default function AboutPage({ onSignInOpen }) {
   const [showContactForm, setShowContactForm] = useState(false);
 
   useEffect(() => {
@@ -136,6 +136,7 @@ export default function AboutPage() {
       <ContactForm 
         isOpen={showContactForm} 
         onClose={() => setShowContactForm(false)} 
+        onSignInOpen={onSignInOpen}
       />
     </div>
   );

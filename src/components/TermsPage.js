@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ContactForm from './ContactForm';
 
-export default function TermsPage() {
+export default function TermsPage({ onSignInOpen }) {
   const [showContactForm, setShowContactForm] = useState(false);
 
   return (
@@ -140,6 +140,7 @@ export default function TermsPage() {
       <ContactForm 
         isOpen={showContactForm} 
         onClose={() => setShowContactForm(false)} 
+        onSignInOpen={onSignInOpen}
       />
     </div>
   );

@@ -18,8 +18,7 @@ import ResetPassword from './components/ResetPassword';
 
 
 
-function Layout({ children }) {
-  const [isSignInOpen, setIsSignInOpen] = useState(false);
+function Layout({ children, isSignInOpen, setIsSignInOpen }) {
   const [isSignUpOpen, setIsSignUpOpen] = useState(false);
 
   const handleSwitchToSignUp = () => {
@@ -527,10 +526,16 @@ export default function App() {
     fetchRestaurants();
   }, []);
 
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+
+  const handleSignInOpen = () => {
+    setIsSignInOpen(true);
+  };
+
   return (
       <AuthProvider>
         <BrowserRouter>
-          <Layout>
+          <Layout isSignInOpen={isSignInOpen} setIsSignInOpen={setIsSignInOpen}>
             <Routes>
               <Route
                 path="/"
@@ -546,7 +551,7 @@ export default function App() {
               />
               <Route
                 path="/about"
-                element={<AboutPage />}
+                element={<AboutPage onSignInOpen={handleSignInOpen} />}
               />
               <Route
                 path="/profile"
@@ -554,11 +559,11 @@ export default function App() {
               />
               <Route
                 path="/faqs"
-                element={<FAQsPage />}
+                element={<FAQsPage onSignInOpen={handleSignInOpen} />}
               />
               <Route
                 path="/terms"
-                element={<TermsPage />}
+                element={<TermsPage onSignInOpen={handleSignInOpen} />}
               />
               <Route
                 path="/reset-password"

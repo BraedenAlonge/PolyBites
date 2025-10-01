@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 
-export default function ContactForm({ isOpen, onClose }) {
+export default function ContactForm({ isOpen, onClose, onSignInOpen }) {
   const popupRef = useRef(null);
   const [formData, setFormData] = useState({
     subject: '',
     message: ''
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -24,16 +27,56 @@ export default function ContactForm({ isOpen, onClose }) {
     };
   }, [isOpen, onClose]);
 
+  // Check authentication status when the form opens
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (isOpen) {
+        setIsCheckingAuth(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsAuthenticated(!!user);
+        setIsCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [isOpen]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Simulate form submission
     try {
-      // Here you would typically send the data to your backend
-      // For now, we'll just simulate a successful submission
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Get the current user's profile if logged in
+      let userId = null;
       
-      setIsSubmitted(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Fetch the profile to get the user_id from the profiles table
+        const profileResponse = await fetch(`http://localhost:5000/api/profiles/auth/${user.id}`);
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          userId = profileData.id;
+        }
+      }
+      
+      // Send the message to the backend
+      const response = await fetch('http://localhost:5000/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          profile_id: userId,
+          subject: formData.subject,
+          message: formData.message
+        }),
+      });
+      
+      if (response.ok) {
+        setIsSubmitted(true);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit message');
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
       alert('There was an error submitting your message. Please try again.');
@@ -53,6 +96,20 @@ export default function ContactForm({ isOpen, onClose }) {
     onClose();
   };
 
+  const handleSignIn = () => {
+    console.log('handleSignIn called, onSignInOpen:', onSignInOpen);
+    onClose();
+    // Small delay to ensure the contact form modal closes before opening sign-in
+    setTimeout(() => {
+      if (onSignInOpen) {
+        console.log('Calling onSignInOpen');
+        onSignInOpen();
+      } else {
+        console.error('onSignInOpen is not defined');
+      }
+    }, 100);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -66,7 +123,38 @@ export default function ContactForm({ isOpen, onClose }) {
           ✕
         </button>
 
-        {!isSubmitted ? (
+        {isCheckingAuth ? (
+          /* Loading state */
+          <div className="text-center py-8">
+            <div className="text-4xl mb-4">⏳</div>
+            <p className="text-gray-600">Checking authentication...</p>
+          </div>
+        ) : !isAuthenticated ? (
+          /* Sign In Required Message */
+          <div className="text-center">
+            <div className="text-6xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Sign In Required
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Please sign in to your account to send us a message.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleSignIn}
+                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={handleClose}
+                className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : !isSubmitted ? (
           <>
             {/* Title */}
             <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">

@@ -15,7 +15,7 @@ import ProfilePage from './components/ProfilePage';
 import FAQsPage from './components/FAQsPage';
 import TermsPage from './components/TermsPage';
 import ResetPassword from './components/ResetPassword';
-
+import valueSortIcon from './assets/icons/value_sort.png';
 
 
 function Layout({ children, isSignInOpen, setIsSignInOpen }) {
@@ -104,6 +104,13 @@ function HomePage({ restaurants, loading, error }) {
           const aRating = parseFloat(a.average_rating) || 0;
           const bRating = parseFloat(b.average_rating) || 0;
           return aRating - bRating;
+        });
+        break;
+      case 'value_desc':
+        sorted.sort((a, b) => {
+          const aValue = parseFloat(a.average_value) || 0;
+          const bValue = parseFloat(b.average_value) || 0;
+          return bValue - aValue;
         });
         break;
       case 'reviews':
@@ -390,6 +397,12 @@ function HomePage({ restaurants, loading, error }) {
                                   <span className="text-gray-900">A-Z</span>
                                 </>
                               )}
+                              {sortBy === 'value_desc' && (
+                                <>
+                                  <img src={valueSortIcon} alt="value sort" className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                                  <span className="text-gray-900 text-sm">Best Value</span>
+                                </>
+                              )}
                             </span>
                             
                             {/* Custom dropdown arrow */}
@@ -456,6 +469,13 @@ function HomePage({ restaurants, loading, error }) {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                                   </svg>
                                   <span className="text-gray-900">A-Z</span>
+                                </button>
+                                <button
+                                  onClick={() => { handleSort('value_desc'); setIsSortDropdownOpen(false); }}
+                                  className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                  <img src={valueSortIcon} alt="value sort" className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                                  <span className="text-gray-900">Best Value</span>
                                 </button>
                               </div>
                             </div>
